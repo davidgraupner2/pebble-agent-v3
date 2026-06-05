@@ -1,0 +1,28 @@
+[workspace]
+# Using the latest resolver for dependency resolution
+resolver = "2"
+
+# Members of this project workspace
+members = ["crates/api-server", "crates/agent","lib/agent-core","lib/agent-database","lib/agent-logging"]
+
+# Excluded from this project workspace
+exclude = []
+
+# Packages to operate on when a specific package wasn't selected
+# These will be built by default with 'cargo build'
+default-members = [
+    "crates/api-server","lib/agent-core","lib/agent-database","lib/agent-logging","crates/agent"
+]
+
+# Override properties for each package in the workspace
+[workspace.package]
+authors = ["David Graupner"]
+homepage = "https://agent.dev.dagdev.net"
+categories = ["command-line-utilities"]
+edition="2021"
+license-file = "LICENSE"
+rust-version="1.96.0"
+repository = "https://github.com/davidgraupner2/agent"
+
+[workspace.metadata.release]
+changelog = "CHANGELOG.md"

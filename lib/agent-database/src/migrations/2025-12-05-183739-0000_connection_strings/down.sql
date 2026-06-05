@@ -1,0 +1,1 @@
+DROP table connection_strings
