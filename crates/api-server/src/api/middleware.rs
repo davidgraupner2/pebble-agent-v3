@@ -1,58 +1,3 @@
-// use crate::api::extensions::DepotExt;
-// use agent_core::prelude::RegistrationClaims;
-// use salvo::http::StatusCode;
-// use salvo::prelude::*;
-// use salvo_jwt_auth::JwtAuthDepotExt;
-
-// #[handler]
-// pub async fn verify_jti_middleware(
-//     depot: &mut Depot,
-//     res: &mut Response,
-//     req: &mut Request,
-//     ctrl: &mut FlowCtrl,
-// ) {
-//     // 1. Retrieve the successfully parsed JWT claims
-//     let jwt_claims = depot.jwt_auth_data::<RegistrationClaims>();
-//     if jwt_claims.is_none() {
-//         res.status_code(StatusCode::UNAUTHORIZED);
-//         res.render("Unauthorized: Invalid token structure.");
-//     }
-
-//     let token_jti = jwt_claims.unwrap().claims.jti.clone();
-
-//     // Extract the database connection and database repositories from depot
-//     let db_connection = depot.db_conn();
-//     let repositories = depot.repositories();
-
-//     if db_connection.is_err() {
-//         res.status_code(StatusCode::UNAUTHORIZED);
-//         res.render("Unauthorized: Database access error.");
-//     }
-
-//     if repositories.is_err() {
-//         res.status_code(StatusCode::UNAUTHORIZED);
-//         res.render("Unauthorized: Database access error.");
-//     }
-
-//     let jti_record = repositories
-//         .unwrap()
-//         .agent_jwt_repo
-//         .get_by_jti(&mut db_connection.unwrap(), &token_jti);
-
-//     if jti_record.is_err() {
-//         res.status_code(StatusCode::UNAUTHORIZED);
-//         res.render("Unauthorized: JTI could not be validated");
-//     }
-
-//     let jti_record = jti_record.unwrap();
-//     if jti_record.is_none() {
-//         res.status_code(StatusCode::UNAUTHORIZED);
-//         res.render("Unauthorized: JTI is not activated");
-//     };
-
-//     ctrl.call_next(req, depot, res).await;
-// }
-
 use crate::api::extensions::DepotExt;
 use agent_core::prelude::RegistrationClaims;
 use salvo::http::StatusCode;
@@ -60,6 +5,12 @@ use salvo::prelude::*;
 use salvo_jwt_auth::JwtAuthDepotExt;
 use tracing::{error, warn};
 
+/// JWT JTI Verification Middleware
+///
+/// Validates that a JWT's JTI (JWT ID) claim exists and is active in the database.
+/// This middleware runs after initial JWT signature validation and checks the tracking table
+/// to ensure the token hasn't been revoked. When new JWTs are issued, all previous tokens
+/// are automatically deactivated.
 #[handler]
 pub async fn verify_jti_middleware(
     depot: &mut Depot,

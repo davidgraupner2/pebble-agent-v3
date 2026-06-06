@@ -1,6 +1,7 @@
 use crate::errors::Result;
 use crate::models::{AgentIdentity, NewAgentIdentity};
 use crate::schema::agent_identities::dsl::*;
+use diesel::associations::HasTable;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use tracing::{debug, info};
@@ -60,5 +61,10 @@ impl AgentIdentityRepository {
             .optional()?;
 
         Ok(result)
+    }
+
+    pub fn get_count(&self, conn: &mut SqliteConnection) -> Result<i64> {
+        let count = agent_identities::table().count().get_result(conn)?;
+        Ok(count)
     }
 }

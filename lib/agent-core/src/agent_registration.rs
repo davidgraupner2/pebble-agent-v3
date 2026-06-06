@@ -4,6 +4,10 @@ use salvo::oapi::{self, EndpointOutRegister, ToSchema};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
+#[salvo(schema(example=json!({
+	"public_key_b64u": "aTQVr-NTQa_odwywJVUjHx84Sedjx7-yynUAGXNo24c",
+	"registration_id": "deb2bc2a4a5b6f8f73d19d532994fd435623862ea5b3fc4783a52ffa63577682"	
+})))]
 pub struct RegistrationChallengeRequest {
     /// Agent public key used for challenge verification.
     ///

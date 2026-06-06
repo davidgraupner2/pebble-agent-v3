@@ -7,6 +7,7 @@ use api_server::bootstrap_api_server;
 use api_server::error::Result;
 use api_server::LOGGING_WORKER_GUARDS;
 use salvo::affix_state::inject;
+use salvo::oapi::security::{Http, HttpAuthScheme, SecurityScheme};
 use salvo::prelude::*;
 
 #[handler]
@@ -63,7 +64,12 @@ async fn main() -> Result<()> {
                 .push(Router::with_path("api/v1").push(info_router())),
         );
 
-    let doc = OpenApi::new("Pebble Agent Api", "1.0.0").merge_router(&router);
+    let doc = OpenApi::new("Pebble Agent Api", "1.0.0")
+        .merge_router(&router)
+        .add_security_scheme(
+            "bearer_token",
+            SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer).bearer_format("JWT")),
+        );
     let router = router
         .push(doc.into_router("/api-doc/openapi.json"))
         .push(SwaggerUi::new("/api-doc/openapi.json").into_router("/swagger-ui"))

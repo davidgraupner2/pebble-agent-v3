@@ -1,19 +1,53 @@
 use crate::api::extensions::DepotExt;
-use agent_core::prelude::RegistrationClaims;
+use crate::error::Result;
+use crate::RuntimeConstants;
 use salvo::prelude::*;
-use salvo_jwt_auth::JwtAuthDepotExt;
+use serde::Serialize;
 
-#[endpoint]
-async fn info(depot: &mut Depot) -> Result<String, StatusError> {
-    let mut conn = depot.db_conn()?;
+#[derive(Serialize, ToSchema)]
+/// Public service metadata returned by the V1 info endpoint.
+///
+/// This payload is intended for API clients, health dashboards, and operators who need
+/// lightweight runtime context without querying internal subsystems.
+struct V1Info {
+    /// Public API contract version exposed by this endpoint (for example, `V1`).
+    api_version: String,
+    /// Compiled application version of the running API server binary.
+    binary_version: String,
+    /// Stable identifier of this API server instance.
+    id: String,
+    /// Current server status string.
+    ///
+    /// `Ok` indicates the server is reachable and responded successfully.
+    status: String,
+    /// Number of agent identities currently registered in the backing database.
+    agents_registered: i64,
+}
 
-    if let Some(token_data) = depot.jwt_auth_data::<RegistrationClaims>() {
-        Ok(format!("Welcome back, {:#?}!", token_data.claims))
-    } else {
-        Ok("Unauthorized access.".to_string())
-    }
+/// Returns high-level API server metadata.
+///
+/// Use this endpoint for quick service introspection and startup compatibility checks.
+/// The response includes protocol version, running binary version, instance identifier,
+/// a human-readable status, and the total number of registered agents.
+#[endpoint(security(("bearer_token"=[])), tags("Information"), status_codes(200, 500))]
+async fn info(depot: &mut Depot) -> Result<Json<V1Info>> {
+    let properties = RuntimeConstants::global();
+    let agent_identity_repo = depot.repositories()?.agent_identity_repo;
 
-    // Ok("Hello World222".to_string())
+    let mut db_connection = depot.db_conn()?;
+    let agent_count = agent_identity_repo.get_count(&mut db_connection)?;
+
+    let version = properties.version();
+
+    let v1_info = V1Info {
+        api_version: "V1".to_string(),
+        binary_version: version.to_string(),
+        id: properties.api_id().to_string(),
+        status: "Ok".to_string(),
+        agents_registered: agent_count,
+    };
+
+    Ok(Json(v1_info))
 }
 
 pub fn info_router() -> Router {
