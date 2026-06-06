@@ -1,6 +1,7 @@
 use crate::constants::RuntimeConstants;
 use jsonwebtoken::{encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use machineid_rs::{Encryption, HWIDComponent, IdBuilder};
+use salvo::Depot;
 use salvo_jwt_auth::JwtAuth;
 use salvo_jwt_auth::{ConstDecoder, HeaderFinder};
 use secrecy::{ExposeSecret, SecretString};

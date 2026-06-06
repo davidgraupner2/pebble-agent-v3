@@ -1,5 +1,6 @@
 use agent_core::prelude::*;
 use agent_logging::initialise_logging;
+use api_server::api::middleware::verify_jti_middleware;
 use api_server::api::v1::info::info_router;
 use api_server::api::v1::registration::registration_router;
 use api_server::bootstrap_api_server;
@@ -58,6 +59,7 @@ async fn main() -> Result<()> {
         // Authenticated routes
         .push(
             Router::with_hoop(auth_jwt_middleware())
+                .hoop(verify_jti_middleware)
                 .push(Router::with_path("api/v1").push(info_router())),
         );
 

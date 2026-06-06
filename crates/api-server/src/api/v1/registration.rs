@@ -12,7 +12,7 @@ use agent_core::prelude::{
     RegistrationChallengeRequest, RegistrationChallengeResponse, RegistrationClaims,
     RuntimeConstants,
 };
-use agent_database::{NewAgentIdentity, NewAgentRegistrationChallenge};
+use agent_database::{NewAgentIdentity, NewAgentJwt, NewAgentRegistrationChallenge};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 use salvo::{oapi::extract::JsonBody, prelude::*};
@@ -122,6 +122,7 @@ pub async fn complete_registration_challenge(
     let mut db_connection = depot.db_conn()?;
     let registration_repo = depot.repositories()?.agent_registration_challenge_repo;
     let identification_repo = depot.repositories()?.agent_identity_repo;
+    let agent_jwt_repo = depot.repositories()?.agent_jwt_repo;
 
     // Get the configured timeout for the registration record
     let config = depot.config()?;
@@ -233,7 +234,7 @@ pub async fn complete_registration_challenge(
     let jti = Uuid::new_v4().to_string();
     let claims = RegistrationClaims::new(
         agent_identity.agent_uuid.clone(),
-        jti,
+        jti.clone(),
         Some(fingerprint.clone()),
         jwt_expires_in_secs,
         now,
@@ -242,6 +243,21 @@ pub async fn complete_registration_challenge(
         error!(errorMsg=%e,challenge_id=%challenge_id,agent_id=%&challenge.registration_id,"JWT generation failed");
         ApiError::ServerError("Failed to issue registration access token".to_string())
     })?;
+
+    // Deactivate all previous jti records
+    let count_jti_deactivated = agent_jwt_repo
+        .deactivate_by_registration_id(&mut db_connection, &agent_identity.agent_uuid)?;
+    debug!(count=%count_jti_deactivated,agent_id=%challenge.registration_id,"Deactivated JTI records");
+
+    // Save the new JTI So that it can be invalidated when needed
+    let agent_jwt_record = agent_jwt_repo.create(
+        &mut db_connection,
+        NewAgentJwt {
+            registration_id: agent_identity.agent_uuid.clone(),
+            jti: jti,
+            status: agent_database::AgentJwtStatus::Active,
+        },
+    )?;
 
     info!(
         agent_uuid = %agent_identity.agent_uuid,challenge_id=%challenge_id,agent_id=%&challenge.registration_id,

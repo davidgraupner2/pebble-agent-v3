@@ -41,6 +41,7 @@ impl AgentJwtRepository {
     ) -> Result<Option<AgentJwt>> {
         let result = agent_jwt
             .filter(jti.eq(jti_value))
+            .filter(status.eq(AgentJwtStatus::Active))
             .first::<AgentJwt>(conn)
             .optional()?;
 
@@ -61,24 +62,27 @@ impl AgentJwtRepository {
         }
     }
 
-    pub fn deactivate_by_jti(
+    pub fn deactivate_by_registration_id(
         &self,
         conn: &mut SqliteConnection,
-        jti_value: &str,
-    ) -> Result<AgentJwt> {
-        let mut agent_jwt_record = self.get_by_jti(conn, jti_value)?.unwrap();
-        agent_jwt_record.status = AgentJwtStatus::Inactive;
+        registration_id_value: &str,
+    ) -> Result<usize> {
+        // let mut agent_jwt_record = self.get_by_jti(conn, jti_value)?.unwrap();
+        // agent_jwt_record.status = AgentJwtStatus::Inactive;
 
-        diesel::update(agent_jwt.filter(jti.eq(jti_value)))
-            .set(&agent_jwt_record)
-            .returning(AgentJwt::as_returning())
-            .get_result::<AgentJwt>(conn)
-            .map_err(|error| {
-                warn!(jti = jti_value, error = %error, "Failed to deactivate Agent JWT Record");
-                error
-            })?;
+        let count = diesel::update(agent_jwt.filter(registration_id.eq(registration_id_value)))
+            .set(status.eq("inactive"))
+            .execute(conn)?;
 
-        Ok(agent_jwt_record)
+        // .returning(AgentJwt::as_returning())
+
+        // .get_result::<AgentJwt>(conn)
+        // .map_err(|error| {
+        //     warn!(jti = jti_value, error = %error, "Failed to deactivate Agent JWT Record");
+        //     error
+        // })?;
+
+        Ok(count)
     }
 
     pub fn activate_by_jti(
