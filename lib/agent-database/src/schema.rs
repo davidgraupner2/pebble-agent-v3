@@ -57,6 +57,17 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
+
+    agent_jwt (id) {
+        id -> Integer,
+        registration_id -> Text,
+        jti -> Text,
+        status -> Text,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
     use super::sql_types::ConnectionStringStatus;
 
     connection_strings (id) {

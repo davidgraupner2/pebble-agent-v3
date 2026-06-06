@@ -37,6 +37,7 @@ pub fn get_db_connection_pool(
 }
 
 pub fn build_database(db_name: &str) -> Result<()> {
+    println!("Building Database");
     match SqliteConnection::establish(&db_name) {
         Ok(mut connection) => match connection.run_pending_migrations(MIGRATIONS) {
             Ok(migrated) => {

@@ -7,7 +7,6 @@ mod schema;
 pub mod traits;
 pub mod validators;
 
-use crate::repositories::agent_identity::AgentIdentityRepository;
 use crate::repositories::cache::CacheRepository;
 use crate::repositories::connection_stats::ConnectionStatsRepository;
 use crate::repositories::encrytion_keys::EncryptionKeyRepository;
@@ -15,6 +14,7 @@ use crate::repositories::function_hashes::FunctionHashRepository;
 use crate::repositories::registration::RegistrationRepository;
 use crate::repositories::registration_challenge::RegistrationChallengeRepository;
 use crate::repositories::secrets::SecretRepository;
+use crate::repositories::{agent_identity::AgentIdentityRepository, agent_jwt::AgentJwtRepository};
 
 fn source_default() -> Option<String> {
     Some("api".to_string())
@@ -33,6 +33,7 @@ pub struct RepositoryContainer {
     pub registration_repo: RegistrationRepository,
     pub agent_identity_repo: AgentIdentityRepository,
     pub agent_registration_challenge_repo: RegistrationChallengeRepository,
+    pub agent_jwt_repo: AgentJwtRepository,
 }
 
 impl RepositoryContainer {
@@ -49,6 +50,7 @@ impl RepositoryContainer {
             registration_repo: RegistrationRepository::new(),
             agent_identity_repo: AgentIdentityRepository::new(),
             agent_registration_challenge_repo: RegistrationChallengeRepository::new(),
+            agent_jwt_repo: AgentJwtRepository::new(),
         }
     }
 }
@@ -58,16 +60,17 @@ impl RepositoryContainer {
 pub use db::{build_database, get_db_connection_pool};
 pub use errors::{DatabaseError, Result};
 pub use models::{
-    AgentIdentity, AgentRegistrationChallenge, ApiConnectionString,
+    AgentIdentity, AgentJwt, AgentJwtStatus, AgentRegistrationChallenge, ApiConnectionString,
     ApiConnectionStringWithEnvironment, ApiEncryptionKey, Cache, CacheWithTags, ConnectionStats,
     ConnectionString, ConnectionStringStatus, CreateCacheRequest, CreateSecretRequest,
     DecryptedSecret, DecryptedSecretWithTags, DecryptionKey, EncryptionKey, Event, EventStatus,
-    FunctionHash, NewAgentIdentity, NewAgentRegistrationChallenge, NewCache, NewConnectionStats,
-    NewConnectionString, NewEncryptionKey, NewEvent, NewFunctionHash, NewRegistration, NewSecret,
-    Property, PropertyRecord, PropertyValue, Registration, Secret, SecretTypeInfo, SecretValue,
-    SecretValueOrEncrypted, SecretWithTags, Tags, TypedProperty, UpdateCache, UpdateCacheRequest,
-    UpdateConnectionStats, UpdateConnectionString, UpdateEvent, UpdateFunctionHash, UpdateProperty,
-    UpdateSecret, UpdateSecretRequest, UpdatedApiEncryptionKey, get_secret_type_info,
+    FunctionHash, NewAgentIdentity, NewAgentJwt, NewAgentRegistrationChallenge, NewCache,
+    NewConnectionStats, NewConnectionString, NewEncryptionKey, NewEvent, NewFunctionHash,
+    NewRegistration, NewSecret, Property, PropertyRecord, PropertyValue, Registration, Secret,
+    SecretTypeInfo, SecretValue, SecretValueOrEncrypted, SecretWithTags, Tags, TypedProperty,
+    UpdateCache, UpdateCacheRequest, UpdateConnectionStats, UpdateConnectionString, UpdateEvent,
+    UpdateFunctionHash, UpdateProperty, UpdateSecret, UpdateSecretRequest, UpdatedApiEncryptionKey,
+    get_secret_type_info,
 };
 
 pub use repositories::connection_strings::ConnectionStringRepository;

@@ -1,4 +1,5 @@
 pub(crate) mod agent_identity;
+pub(crate) mod agent_jwt;
 pub(crate) mod cache;
 pub(crate) mod connection_stats;
 pub(crate) mod connection_strings;

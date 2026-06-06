@@ -1,6 +1,8 @@
 #[allow(dead_code)]
 mod agent_identity;
 #[allow(dead_code)]
+mod agent_jwt;
+#[allow(dead_code)]
 mod cache;
 #[allow(dead_code)]
 mod cache_tags;
@@ -31,6 +33,7 @@ mod tags;
 
 // Public re-exports
 pub use agent_identity::{AgentIdentity, NewAgentIdentity};
+pub use agent_jwt::{AgentJwt, AgentJwtStatus, NewAgentJwt};
 pub use cache::{
     Cache, CacheWithTags, CreateCacheRequest, NewCache, UpdateCache, UpdateCacheRequest,
 };

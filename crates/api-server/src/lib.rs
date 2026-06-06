@@ -58,7 +58,7 @@ pub fn bootstrap_api_server() -> Result<BootstrapParameters> {
     // - This allows us to easily get and set database properties
     let config = initialise_global_config(&pool, &repository_container)?;
 
-    // Initalise and set default api properties if they haven't been sset yet
+    // Initalise and set default api properties if they haven't been set yet
     initialise_database_properties(&config)?;
 
     // Gets the API Port we will be using
