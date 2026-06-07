@@ -22,3 +22,10 @@ reqwest={ version = "0.13.3",features = ["json"]}
 ed25519-dalek = { version = "2", features = ["rand_core"] }
 rand = "0.8"
 base64ct = { version = "1", features = ["alloc"] }
+
+# [target.'cfg(windows)'.dependencies]
+# windows-service = "0.8.1"
+
+# [target.'cfg(target_os = "linux")'.dependencies]
+# # For handling systemd notifications (optional but recommended)
+# libsystemd = "0.7"

@@ -37,7 +37,6 @@ pub fn get_db_connection_pool(
 }
 
 pub fn build_database(db_name: &str) -> Result<()> {
-    println!("Building Database");
     match SqliteConnection::establish(&db_name) {
         Ok(mut connection) => match connection.run_pending_migrations(MIGRATIONS) {
             Ok(migrated) => {
@@ -50,7 +49,7 @@ pub fn build_database(db_name: &str) -> Result<()> {
                 #[cfg(feature = "tracing")]
                 warn!(errorMsg=%error,"Database migrations did NOT execute successfully!");
 
-                println!("Error building database: {}", error);
+                eprintln!("Error building database: {}", error);
 
                 Err(DatabaseError::Migration(error.to_string()))
             }

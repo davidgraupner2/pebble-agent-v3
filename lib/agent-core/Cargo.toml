@@ -18,3 +18,4 @@ secrecy = "0.10.3"
 base64="0.22.1"
 salvo-jwt-auth="0.93.0"
 salvo={version="0.93.0", features=["oapi"]}
+

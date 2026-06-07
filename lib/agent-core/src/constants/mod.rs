@@ -4,6 +4,7 @@ use crate::constants::folders::Folders;
 use base64::prelude::*;
 use machineid_rs::{Encryption, HWIDComponent, IdBuilder};
 use std::collections::BTreeMap;
+use std::env;
 use std::env::home_dir;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -235,14 +236,24 @@ impl RuntimeConstants {
 fn runtime_id() -> String {
     // Get the current home directory
     // - We use this as a value for generating a unique id, this allows us to have different ids for agents in different directories
-    let current_dir = home_dir()
+    let current_dir = env::current_dir()
         .unwrap()
+        .clone()
         .into_os_string()
         .into_string()
         .unwrap()
         .clone()
         .replace("/", "")
         .replace("\\", "");
+
+    // let current_dir = home_dir()
+    //     .unwrap()
+    //     .into_os_string()
+    //     .into_string()
+    //     .unwrap()
+    //     .clone()
+    //     .replace("/", "")
+    //     .replace("\\", "");
     let current_dir_static: &'static str = Box::leak(current_dir.into_boxed_str());
 
     let mut hardware_id_builder = IdBuilder::new(Encryption::SHA256);
@@ -258,14 +269,25 @@ fn runtime_id() -> String {
 fn runtime_api_id() -> String {
     // Get the current home directory
     // - We use this as a value for generating a unique id, this allows us to have different ids for API's (if we needed) in different directories
-    let current_dir = home_dir()
+
+    let current_dir = env::current_dir()
         .unwrap()
+        .clone()
         .into_os_string()
         .into_string()
         .unwrap()
         .clone()
         .replace("/", "")
         .replace("\\", "");
+
+    // let current_dir = home_dir()
+    //     .unwrap()
+    //     .into_os_string()
+    //     .into_string()
+    //     .unwrap()
+    //     .clone()
+    //     .replace("/", "")
+    //     .replace("\\", "");
     let current_dir_static: &'static str = Box::leak(current_dir.into_boxed_str());
 
     let mut hardware_id_builder = IdBuilder::new(Encryption::SHA256);

@@ -34,6 +34,7 @@ impl Folders {
             jobs_folder,
             deno_cache_folder,
             discovery_folder,
+            plugins_folder,
         }
     }
     #[cfg(any(target_os = "linux", target_os = "macos"))]
