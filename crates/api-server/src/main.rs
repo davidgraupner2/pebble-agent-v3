@@ -1,7 +1,9 @@
 use agent_core::prelude::*;
 use agent_logging::initialise_logging;
 use api_server::error::Result;
-use api_server::{bootstrap_api_server, server_core::run_server_core, windows};
+#[cfg(windows)]
+use api_server::windows;
+use api_server::{bootstrap_api_server, server_core::run_server_core};
 use api_server::{LOGGING_WORKER_GUARDS, SERVICE_DISPLAY_NAME, SERVICE_NAME};
 use clap::{Parser, Subcommand};
 
