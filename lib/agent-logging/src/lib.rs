@@ -3,7 +3,6 @@ pub(crate) mod output;
 
 use crate::format::LogFileFormat;
 use crate::output::LogOutput;
-use std::os::raw::c_char;
 use std::path::PathBuf;
 use std::str::FromStr;
 use tracing_appender::non_blocking::WorkerGuard;

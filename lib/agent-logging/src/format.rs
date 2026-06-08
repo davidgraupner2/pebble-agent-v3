@@ -1,5 +1,5 @@
 use std::str::FromStr;
-pub(crate) enum LogFileFormat {
+pub enum LogFileFormat {
     JSON,
     Full,
     Pretty,

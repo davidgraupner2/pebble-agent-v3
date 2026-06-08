@@ -22,6 +22,7 @@ use tracing_appender::non_blocking::WorkerGuard;
 pub const SERVICE_NAME: &str = "PebbleAgentApiServer";
 pub const SERVICE_DISPLAY_NAME: &str = "Pebble Agent API Server";
 pub const SERVICE_DESCRIPTION: &str = "This API server is part of the Pebble Agent Suite and serves to a provide a persisted multi-tenanted database and API layer for the Pebble Agents that power your automation strategy";
+
 /// Default property definitions
 pub struct DefaultProperty {
     pub name: &'static str,
