@@ -1,4 +1,7 @@
-use crate::actors::controller::{actor::Controller, arguments::ControllerArguments};
+use crate::{
+    actors::controller::{actor::Controller, arguments::ControllerArguments},
+    proxy::ProxySetting,
+};
 use anyhow::Result;
 use ractor::Actor;
 use std::time::Duration;
@@ -12,6 +15,12 @@ pub async fn run_agent_core(
     log_format: String,
     log_output: String,
     logging_level: String,
+    connection_string: String,
+    connection_timeout: u16,
+    ping_interval: u16,
+    retry_interval: u16,
+    pong_response_interval: u16,
+    proxy_settings: ProxySetting,
     mut shutdown_rx: watch::Receiver<bool>,
 ) -> Result<()> {
     let agent_runtime_controller_arguments = ControllerArguments {
@@ -21,6 +30,12 @@ pub async fn run_agent_core(
         log_format,
         log_output,
         logging_level,
+        connection_string,
+        connection_timeout,
+        ping_interval,
+        retry_interval,
+        pong_response_interval,
+        proxy_settings,
     };
 
     // Start the runtime controller

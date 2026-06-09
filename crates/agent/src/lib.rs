@@ -3,6 +3,7 @@ pub mod agent_core;
 #[cfg(target_os = "linux")]
 pub mod linux;
 pub mod platform_messages;
+pub mod proxy;
 pub mod registration;
 
 #[cfg(windows)]

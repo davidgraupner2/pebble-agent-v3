@@ -1,4 +1,5 @@
 use agent::agent_core::run_agent_core;
+use agent::proxy::ProxySetting;
 #[cfg(windows)]
 use agent::windows::{install_service, uninstall_service};
 use agent_core::prelude::*;
@@ -100,6 +101,78 @@ struct Args {
         default_value_t = 8174u16
     )]
     api_port: u16,
+
+    #[arg(
+        short = 'c',
+        long = "connection-string",
+        help = "Connection String used to connect to the core plafform",
+        default_value = ""
+    )]
+    connection_string: String,
+
+    #[arg(
+        short = 't',
+        long = "connection-timeout",
+        help = "Indicates how long the agent should wait for a websocket connection, before restarting and trying again",
+        default_value_t = 10
+    )]
+    connection_timeout: u16,
+
+    #[arg(
+        short = 'i',
+        long = "ping_interval",
+        help = "Indicates how often the agent should ping the websocket server to keep the connection alive",
+        default_value_t = 30
+    )]
+    ping_interval: u16,
+
+    #[arg(
+        short = 'r',
+        long = "retry_interval",
+        help = "Indicates how often the agent should try and re-establish a connection to websocket server",
+        default_value_t = 30
+    )]
+    retry_interval: u16,
+
+    #[arg(
+        short = 'v',
+        long = "pong_response_interval",
+        help = "Indicates how long the agent should wait for a pong response, before terminating the connection and restarting - if a pong not received in time",
+        default_value_t = 30
+    )]
+    pong_response_interval: u16,
+
+    #[arg(
+        short = 'x',
+        long = "proxy_server",
+        help = "Indicates the proxy server name to use when establishing outbound connections",
+        default_value = None
+    )]
+    proxy_server: Option<String>,
+
+    #[arg(
+        short = 'y',
+        long = "proxy_port",
+        help = "Indicates the proxy port name to use when establishing outbound connections",
+        default_value = None
+    )]
+    proxy_port: Option<u16>,
+
+    #[arg(
+        short = 'u',
+        long = "proxy_username",
+        help = "Indicates the user name to use for proxy authentication when establishing outbound connections",
+        default_value = None
+    )]
+    proxy_username: Option<String>,
+
+    #[arg(
+        short = 'w',
+        long = "proxy_password",
+        help = "Indicates the password to use for proxy authentication when establishing outbound connections",
+        default_value = None
+    )]
+    proxy_password: Option<String>,
 
     #[command(subcommand)]
     command: Option<Commands>,
@@ -248,10 +321,19 @@ async fn main() -> anyhow::Result<()> {
             cli.log_format.to_string(),
             cli.log_output.to_string(),
             cli.log_level.to_string(),
+            cli.connection_string,
+            cli.connection_timeout,
+            cli.ping_interval,
+            cli.retry_interval,
+            cli.pong_response_interval,
+            ProxySetting::new(
+                cli.proxy_server,
+                cli.proxy_port,
+                cli.proxy_username,
+                cli.proxy_password,
+            ),
         )
         .await;
-
-        Ok(())
     }
 
     #[cfg(not(target_os = "linux"))]

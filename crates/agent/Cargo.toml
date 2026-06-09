@@ -17,7 +17,7 @@ tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 clap = { version = "4.6.1", features=["derive"] }
 serde_json = "1.0"
-reqwest={ version = "0.13.3",features = ["json"]}
+reqwest={ version = "0.12.15", features = ["json", "blocking"] }
 ed25519-dalek = { version = "2", features = ["rand_core"] }
 rand = "0.8"
 base64ct = { version = "1", features = ["alloc"] }
@@ -25,6 +25,11 @@ ractor="0.15.10"
 tracing = "0.1.41"
 tracing-appender = "0.2.3"
 anyhow ="1.0.102"
+reqwest-websocket="0.4.4"
+tokio-util ="0.7.18"
+futures-util="0.3.31"
+url="2.5.8"
+confy="2.0.0"
 
 [target.'cfg(windows)'.dependencies]
 windows-service = "0.8.1"

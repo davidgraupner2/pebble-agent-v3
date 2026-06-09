@@ -1,4 +1,5 @@
 use crate::agent_core::run_agent_core;
+use crate::proxy::ProxySetting;
 use anyhow::Result;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::sync::watch;
@@ -11,6 +12,12 @@ pub async fn run_linux(
     log_format: String,
     log_output: String,
     logging_level: String,
+    connection_string: String,
+    connection_timeout: u16,
+    ping_interval: u16,
+    retry_interval: u16,
+    pong_response_interval: u16,
+    proxy_settings: ProxySetting,
 ) -> Result<()> {
     let (shutdown_tx, shutdown_rx) = watch::channel(false);
 
@@ -34,6 +41,12 @@ pub async fn run_linux(
         log_format,
         log_output,
         logging_level,
+        connection_string,
+        connection_timeout,
+        ping_interval,
+        retry_interval,
+        pong_response_interval,
+        proxy_settings,
         shutdown_rx,
     )
     .await
