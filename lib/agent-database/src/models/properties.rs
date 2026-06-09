@@ -1,6 +1,7 @@
 use crate::schema::properties;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use salvo::oapi::ToSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
@@ -81,7 +82,7 @@ pub struct UpdateProperty {
 }
 
 /// Typed enum for API usage
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 #[serde(tag = "type", content = "value")]
 pub enum PropertyValue {
     #[serde(rename = "int")]
@@ -95,7 +96,7 @@ pub enum PropertyValue {
 }
 
 /// Clean API response struct
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, ToSchema)]
 pub struct TypedProperty {
     pub id: i32,
     #[cfg_attr(not(debug_assertions), serde(skip_serializing))]

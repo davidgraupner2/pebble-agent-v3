@@ -100,6 +100,7 @@ dependencies = [
  "once_cell",
  "petname",
  "rand 0.8.6",
+ "salvo",
  "secrecy",
  "serde",
  "serde_json",

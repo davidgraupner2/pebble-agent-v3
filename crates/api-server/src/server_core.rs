@@ -1,5 +1,6 @@
 use crate::api::middleware::verify_jti_middleware;
 use crate::api::v1::info::info_router;
+use crate::api::v1::properties::properties_router;
 use crate::api::v1::registration::registration_router;
 use crate::BootstrapParameters;
 use agent_core::prelude::*;
@@ -32,7 +33,8 @@ pub async fn run_server_core(
         .push(
             Router::with_hoop(auth_jwt_middleware())
                 .hoop(verify_jti_middleware)
-                .push(Router::with_path("api/v1").push(info_router())),
+                .push(Router::with_path("api/v1").push(info_router()))
+                .push(Router::with_path("api/v1").push(properties_router())),
         );
 
     let doc = OpenApi::new("Pebble Agent Api", "1.0.0")

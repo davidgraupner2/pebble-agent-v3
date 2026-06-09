@@ -1,5 +1,6 @@
 use agent::agent_core::run_agent_core;
 use agent::proxy::ProxySetting;
+use agent::registration::challenge::get_api_jwt;
 #[cfg(windows)]
 use agent::windows::{install_service, uninstall_service};
 use agent_core::prelude::*;
@@ -297,20 +298,20 @@ async fn main() -> anyhow::Result<()> {
     // .await
     // .expect("Agent RuntimeController failed to start");
 
-    // if !cli.standalone {
-    //     let base_url = format!("http://{}:{}", cli.api_host, cli.api_port);
-    //     let jwt = get_api_jwt(
-    //         &format!("{}/api/v1/registration/challenge", base_url),
-    //         &format!("{}/api/v1/registration/complete", base_url),
-    //     )
-    //     .await;
+    if !cli.standalone {
+        let base_url = format!("http://{}:{}", cli.api_host, cli.api_port);
+        let jwt = get_api_jwt(
+            &format!("{}/api/v1/registration/challenge", base_url),
+            &format!("{}/api/v1/registration/complete", base_url),
+        )
+        .await;
 
-    //     if jwt.is_ok() {
-    //         println!("We got a JWT: {:#?}", jwt.unwrap());
-    //     } else {
-    //         println!("We got an error: {}", jwt.unwrap_err());
-    //     }
-    // }
+        if jwt.is_ok() {
+            println!("We got a JWT: {:#?}", jwt.unwrap());
+        } else {
+            println!("We got an error: {}", jwt.unwrap_err());
+        }
+    }
 
     #[cfg(target_os = "linux")]
     {

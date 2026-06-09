@@ -22,6 +22,9 @@ pub enum ApiError {
     #[error("Database Error: {0}")]
     DatabaseError(String),
 
+    #[error("Authorisation Error: {0}")]
+    AuthorisationError(String),
+
     #[error("{0}")]
     ConnectionStringValidationError(String),
 
@@ -192,6 +195,12 @@ impl Writer for ApiError {
                 error!("Salvo Error: {}", error);
                 StatusError::internal_server_error()
                     .brief("Server Error")
+                    .detail(format!("{}", error))
+            }
+            ApiError::AuthorisationError(error) => {
+                error!("Authorisation Error: {}", error);
+                StatusError::unauthorized()
+                    .brief("Authorisation Error")
                     .detail(format!("{}", error))
             }
         };
