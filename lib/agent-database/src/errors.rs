@@ -96,6 +96,11 @@ pub enum DatabaseError {
     #[error("Validation error: {0}")]
     ValidationError(String),
 
+    #[error(
+        "Cannot change property type for 'config' source: Existing Type '{0}' - New Type '{1}'"
+    )]
+    ValidationErrorCannotChangeConfigType(String, String),
+
     #[error("{0}")]
     PublicKeyEncodingError(String),
 }

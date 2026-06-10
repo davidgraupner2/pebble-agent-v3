@@ -32,7 +32,7 @@ diesel::table! {
 
     agent_identities (id) {
         id -> Integer,
-        agent_uuid -> Text,
+        registration_id -> Text,
         pubkey_fingerprint -> Text,
         pubkey_b64u -> Text,
         agent_id -> Text,
@@ -192,7 +192,7 @@ diesel::table! {
 diesel::table! {
     properties (id) {
         id -> Integer,
-        agent_uuid -> Nullable<Text>,
+        agent_uuid -> Text,
         name -> Text,
         #[sql_name = "type"]
         type_ -> Text,

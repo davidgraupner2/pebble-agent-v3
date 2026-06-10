@@ -1,6 +1,6 @@
 CREATE TABLE properties (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    agent_uuid TEXT,
+    agent_uuid TEXT NOT NULL,
     name VARCHAR NOT NULL UNIQUE,
     type VARCHAR NOT NULL CHECK(type IN ('int', 'string', 'bool', 'json')),
     description VARCHAR,
@@ -40,3 +40,10 @@ BEGIN
     UPDATE properties SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
 END;
 
+CREATE TRIGGER properties_protect_config_delete
+BEFORE DELETE ON properties
+FOR EACH ROW
+WHEN LOWER(TRIM(OLD.source)) = 'config'
+BEGIN
+    SELECT RAISE(ABORT, 'Cannot delete config properties');
+END;

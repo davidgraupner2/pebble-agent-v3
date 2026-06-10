@@ -1,6 +1,10 @@
+use std::any::Any;
+
 use crate::api::extensions::DepotExt;
 use crate::error::{ApiError, Result};
+use agent_database::DatabaseError::ValidationErrorCannotChangeConfigType;
 use agent_database::{Property, PropertyValue, RepositoryGetSet, TypedProperty};
+use diesel::result::Error::DatabaseError;
 use salvo::oapi::extract::JsonBody;
 use salvo::oapi::extract::PathParam;
 use salvo::prelude::*;
@@ -90,7 +94,7 @@ async fn get_property(depot: &mut Depot, name: PathParam<String>) -> Result<Json
     match property_repo.get(
         &mut db_connection,
         property_name.clone(),
-        Some(registration_id.clone()),
+        registration_id.clone(),
     ) {
         Ok(Some(property)) => Ok(Json(property)),
         Ok(None) => Err(ApiError::NotFoundError(format!(
@@ -129,7 +133,7 @@ async fn get_properties(depot: &mut Depot) -> Result<Json<Vec<TypedProperty>>> {
     let mut db_connection = depot.db_conn()?;
     let registration_id = depot.registration_id();
 
-    match property_repo.get_all(&mut db_connection, Some(registration_id.clone())) {
+    match property_repo.get_all(&mut db_connection, registration_id.clone()) {
         Ok(properties) => {
             if properties.is_empty() {
                 Err(ApiError::NotFoundError("No Properties found".to_string()))
@@ -175,18 +179,23 @@ async fn add_property(
     let registration_id = depot.registration_id();
     let typed_value = infer_property_value(payload.value.clone());
 
-    let property = typed_value.to_new_property(
+    let property_to_add = typed_value.to_new_property(
         payload.name.clone(),
-        Some(registration_id.clone()),
+        registration_id.clone(),
         payload.description.clone(),
         "api".to_string(),
     );
 
-    match property_repo.set(&mut db_connection, property) {
+    match property_repo.set(&mut db_connection, property_to_add) {
         Ok(property) => Ok(Json(property)),
         Err(error) => {
             error!(errorMsg=%error,registration_id=registration_id,name=%payload.name,"Error adding property to database");
-            Err(ApiError::ServerError(error.to_string()))
+            match error {
+                ValidationErrorCannotChangeConfigType(..) => {
+                    Err(ApiError::BadRequest(error.to_string()))
+                }
+                _ => Err(ApiError::ServerError(error.to_string())),
+            }
         }
     }
 }
@@ -227,7 +236,7 @@ async fn add_properties(
         let typed_value = infer_property_value(item.value);
         let property: Property = typed_value.to_new_property(
             item.name,
-            Some(registration_id.clone()),
+            registration_id.clone(),
             item.description,
             "api".to_string(),
         );

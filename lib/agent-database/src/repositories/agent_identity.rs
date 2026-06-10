@@ -20,7 +20,7 @@ impl AgentIdentityRepository {
         new: NewAgentIdentity,
     ) -> Result<AgentIdentity> {
         debug!(
-            agent_uuid = %new.agent_uuid,
+            registration_id = %new.registration_id,
             fingerprint = %new.pubkey_fingerprint,
             "Creating agent identity"
         );
@@ -30,7 +30,7 @@ impl AgentIdentityRepository {
             .get_result(conn)?;
 
         info!(
-            agent_uuid = %new.agent_uuid,
+            registration_id = %new.registration_id,
             "Agent identity created"
         );
 
@@ -56,7 +56,7 @@ impl AgentIdentityRepository {
         uuid: &str,
     ) -> Result<Option<AgentIdentity>> {
         let result = agent_identities
-            .filter(agent_uuid.eq(uuid))
+            .filter(registration_id.eq(uuid))
             .first::<AgentIdentity>(conn)
             .optional()?;
 

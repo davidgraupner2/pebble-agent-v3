@@ -10,7 +10,7 @@ use crate::schema::agent_identities;
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct AgentIdentity {
     pub id: i32,
-    pub agent_uuid: String,
+    pub registration_id: String,
     pub pubkey_fingerprint: String,
     pub pubkey_b64u: String,
     pub agent_id: String,
@@ -22,7 +22,7 @@ pub struct AgentIdentity {
 #[derive(Insertable, Debug, Clone)]
 #[diesel(table_name = agent_identities)]
 pub struct NewAgentIdentity {
-    pub agent_uuid: String,
+    pub registration_id: String,
     pub pubkey_fingerprint: String,
     pub pubkey_b64u: String,
     pub agent_id: String,
@@ -32,7 +32,7 @@ pub struct NewAgentIdentity {
 impl NewAgentIdentity {
     pub fn new(pubkey_fingerprint: String, pubkey_b64u: String, agent_id: String) -> Self {
         Self {
-            agent_uuid: Uuid::new_v4().to_string(),
+            registration_id: Uuid::new_v4().to_string(),
             pubkey_fingerprint,
             pubkey_b64u,
             agent_id,

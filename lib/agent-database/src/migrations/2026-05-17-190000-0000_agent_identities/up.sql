@@ -1,6 +1,6 @@
 Create table agent_identities (
   id integer not null primary key autoincrement,
-  agent_uuid text not null unique,
+  registration_id text not null unique,
   pubkey_fingerprint text not null unique,
   pubkey_b64u text not null,
   agent_id text not null,

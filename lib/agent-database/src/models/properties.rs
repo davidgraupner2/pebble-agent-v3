@@ -10,7 +10,7 @@ use std::fmt::Display;
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct PropertyRecord {
     pub id: i32,
-    pub agent_uuid: Option<String>,
+    pub agent_uuid: String,
     pub name: String,
     #[serde(rename = "type")]
     pub type_: String,
@@ -27,7 +27,7 @@ pub struct PropertyRecord {
 #[derive(Insertable, Debug)]
 #[diesel(table_name = properties)]
 pub struct Property {
-    pub agent_uuid: Option<String>,
+    pub agent_uuid: String,
     pub name: String,
     pub type_: String,
     pub description: Option<String>,
@@ -70,7 +70,7 @@ impl Display for Property {
 #[diesel(table_name = properties)]
 pub struct UpdateProperty {
     pub id: i32,
-    pub agent_uuid: Option<String>,
+    pub agent_uuid: String,
     pub name: String,
     pub type_: String,
     pub description: Option<String>,
@@ -100,7 +100,7 @@ pub enum PropertyValue {
 pub struct TypedProperty {
     pub id: i32,
     #[cfg_attr(not(debug_assertions), serde(skip_serializing))]
-    pub agent_uuid: Option<String>,
+    pub agent_uuid: String,
     pub name: String,
     pub description: Option<String>,
     pub source: String,
@@ -145,7 +145,7 @@ impl PropertyValue {
     pub fn to_new_property(
         self,
         name: String,
-        agent_uuid: Option<String>,
+        agent_uuid: String,
         description: Option<String>,
         source: String,
     ) -> Property {

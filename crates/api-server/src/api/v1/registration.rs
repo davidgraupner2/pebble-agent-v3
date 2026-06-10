@@ -53,7 +53,7 @@ async fn registration_challenge(
     let registration_expiry_in_secs = config.get_int(
         PROPERTY_API_AGENT_REGISTRATION_EXPIRY_SECS,
         DEFAULT_PROPERTY_API_AGENT_REGISTRATION_EXPIRY_SECS,
-        Some(api_id.to_string()),
+        api_id.to_string(),
     );
 
     // Create a challenge response with a nonce we will send back to the requester
@@ -129,7 +129,7 @@ pub async fn complete_registration_challenge(
     let registration_expiry_in_secs = config.get_int(
         PROPERTY_API_AGENT_REGISTRATION_EXPIRY_SECS,
         DEFAULT_PROPERTY_API_AGENT_REGISTRATION_EXPIRY_SECS,
-        Some(api_id.to_string()),
+        api_id.to_string(),
     );
 
     // Retrieve the matching challenge record from the database
@@ -214,7 +214,7 @@ pub async fn complete_registration_challenge(
     let jwt_expiry_in_mins = config.get_int(
         PROPERTY_API_JWT_EXPIRY_MINUTES,
         DEFAULT_PROPERTY_API_JWT_EXPIRY_MINUTES,
-        Some(api_id.to_string()),
+        api_id.to_string(),
     );
 
     //  calculate now in secs
@@ -233,7 +233,7 @@ pub async fn complete_registration_challenge(
     // Issue JWT for the registered agent
     let jti = Uuid::new_v4().to_string();
     let claims = RegistrationClaims::new(
-        agent_identity.agent_uuid.clone(),
+        agent_identity.registration_id.clone(),
         jti.clone(),
         Some(fingerprint.clone()),
         jwt_expires_in_secs,
@@ -246,21 +246,21 @@ pub async fn complete_registration_challenge(
 
     // Deactivate all previous jti records
     let count_jti_deactivated = agent_jwt_repo
-        .deactivate_by_registration_id(&mut db_connection, &agent_identity.agent_uuid)?;
+        .deactivate_by_registration_id(&mut db_connection, &agent_identity.registration_id)?;
     debug!(count=%count_jti_deactivated,agent_id=%challenge.registration_id,"Deactivated JTI records");
 
     // Save the new JTI So that it can be invalidated when needed
     let _agent_jwt_record = agent_jwt_repo.create(
         &mut db_connection,
         NewAgentJwt {
-            registration_id: agent_identity.agent_uuid.clone(),
+            registration_id: agent_identity.registration_id.clone(),
             jti: jti,
             status: agent_database::AgentJwtStatus::Active,
         },
     )?;
 
     info!(
-        agent_uuid = %agent_identity.agent_uuid,challenge_id=%challenge_id,agent_id=%&challenge.registration_id,
+        agent_uuid = %&agent_identity.registration_id   ,challenge_id=%challenge_id,agent_id=%&challenge.registration_id,
         "Identification complete via registration challenge response"
     );
 
@@ -268,7 +268,7 @@ pub async fn complete_registration_challenge(
     let _ = registration_repo.delete_by_challenge_id(&mut db_connection, challenge_id);
 
     Ok(Json(CompleteRegistrationResponse {
-        agent_uuid: agent_identity.agent_uuid,
+        agent_uuid: agent_identity.registration_id,
         access_token: jwt,
         expires_in_sec: jwt_expiry_in_mins * 60,
     }))

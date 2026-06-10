@@ -73,7 +73,7 @@ impl Config {
 
     /// Get an integer property with a default fallback
     #[allow(dead_code)]
-    pub fn get_int(&self, name: &str, default: i32, agent_uuid: Option<String>) -> i32 {
+    pub fn get_int(&self, name: &str, default: i32, agent_uuid: String) -> i32 {
         match self.db_connection() {
             Ok(mut conn) => match self
                 .property_repo
@@ -93,7 +93,7 @@ impl Config {
 
     /// Get a string property with a default fallback
     #[allow(dead_code)]
-    pub fn get_string(&self, name: &str, default: &str, agent_uuid: Option<String>) -> String {
+    pub fn get_string(&self, name: &str, default: &str, agent_uuid: String) -> String {
         match self.db_connection() {
             Ok(mut conn) => match self
                 .property_repo
@@ -113,7 +113,7 @@ impl Config {
 
     /// Get a boolean property with a default fallback
     #[allow(dead_code)]
-    pub fn get_bool(&self, name: &str, default: bool, agent_uuid: Option<String>) -> bool {
+    pub fn get_bool(&self, name: &str, default: bool, agent_uuid: String) -> bool {
         match self.db_connection() {
             Ok(mut conn) => match self
                 .property_repo
@@ -137,7 +137,7 @@ impl Config {
         &self,
         name: &str,
         default: serde_json::Value,
-        agent_uuid: Option<String>,
+        agent_uuid: String,
     ) -> serde_json::Value {
         match self.db_connection() {
             Ok(mut conn) => match self
@@ -164,7 +164,7 @@ impl Config {
         name: &str,
         value: i32,
         description: Option<&str>,
-        agent_uuid: Option<String>,
+        agent_uuid: String,
     ) -> Result<i32> {
         let mut conn = self.db_connection()?;
         let property = Property {
@@ -194,7 +194,7 @@ impl Config {
         name: &str,
         value: &str,
         description: Option<&str>,
-        agent_uuid: Option<String>,
+        agent_uuid: String,
     ) -> Result<String> {
         let mut conn = self.db_connection()?;
         let property = Property {
@@ -224,7 +224,7 @@ impl Config {
         name: &str,
         value: bool,
         description: Option<&str>,
-        agent_uuid: Option<String>,
+        agent_uuid: String,
     ) -> Result<bool> {
         let mut conn = self.db_connection()?;
         let property = Property {
@@ -254,7 +254,7 @@ impl Config {
         name: &str,
         value: serde_json::Value,
         description: Option<&str>,
-        agent_uuid: Option<String>,
+        agent_uuid: String,
     ) -> Result<serde_json::Value> {
         let mut conn = self.db_connection()?;
         let property = Property {

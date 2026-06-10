@@ -74,7 +74,7 @@ pub fn bootstrap_api_server() -> Result<BootstrapParameters> {
     let port = config.get_int(
         PROPERTY_API_PORT,
         DEFAULT_PROPERTY_API_PORT,
-        Some(RuntimeConstants::global().api_id().to_string()),
+        RuntimeConstants::global().api_id().to_string(),
     );
 
     // Get the logging properties
@@ -173,35 +173,27 @@ pub(crate) fn initialise_database_properties(config: &Config) -> Result<()> {
     for prop in default_properties() {
         match prop.value {
             PropertyValue::Int(val) => {
-                let _ = config.get_or_set_int(
-                    prop.name,
-                    val,
-                    prop.description,
-                    Some(api_id.to_string()),
-                )?;
+                let _ =
+                    config.get_or_set_int(prop.name, val, prop.description, api_id.to_string())?;
             }
             PropertyValue::String(ref val) => {
                 let _ = config.get_or_set_string(
                     prop.name,
                     val,
                     prop.description,
-                    Some(api_id.to_string()),
+                    api_id.to_string(),
                 )?;
             }
             PropertyValue::Bool(val) => {
-                let _ = config.get_or_set_bool(
-                    prop.name,
-                    val,
-                    prop.description,
-                    Some(api_id.to_string()),
-                )?;
+                let _ =
+                    config.get_or_set_bool(prop.name, val, prop.description, api_id.to_string())?;
             }
             PropertyValue::Json(ref val) => {
                 let _ = config.get_or_set_json(
                     prop.name,
                     val.clone(),
                     prop.description,
-                    Some(api_id.to_string()),
+                    api_id.to_string(),
                 )?;
             }
         }
@@ -288,21 +280,9 @@ pub(crate) fn get_logging_properties(config: &Config) -> Result<(String, String,
     let api_id = RuntimeConstants::global().api_id();
     // match CONFIG.get() {
     //     Some(config) => {
-    let logging_format = config.get_string(
-        PROPERTY_API_LOGGING_FORMAT,
-        "json",
-        Some(api_id.to_string()),
-    );
-    let logging_level = config.get_string(
-        PROPERTY_API_LOGGING_LEVEL,
-        "error",
-        Some(api_id.to_string()),
-    );
-    let logging_output = config.get_string(
-        PROPERTY_API_LOGGING_OUTPUT,
-        "file",
-        Some(api_id.to_string()),
-    );
+    let logging_format = config.get_string(PROPERTY_API_LOGGING_FORMAT, "json", api_id.to_string());
+    let logging_level = config.get_string(PROPERTY_API_LOGGING_LEVEL, "error", api_id.to_string());
+    let logging_output = config.get_string(PROPERTY_API_LOGGING_OUTPUT, "file", api_id.to_string());
     Ok((logging_format, logging_level, logging_output))
     //     }
     //     None => Err(ApiError::ConfigError(

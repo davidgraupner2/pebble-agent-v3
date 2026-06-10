@@ -3,7 +3,9 @@ use crate::errors::Result;
 use crate::models::{Property, PropertyRecord, TypedProperty, UpdateProperty};
 use crate::schema::properties;
 use crate::traits::RepositoryGetSet;
+use diesel::dsl::sql;
 use diesel::prelude::*;
+use diesel::sql_types::Bool;
 use tracing::{debug, info, trace, warn};
 
 #[allow(dead_code)]
@@ -23,12 +25,9 @@ impl RepositoryGetSet<TypedProperty, Property> for PropertyRepository {
         &self,
         conn: &mut SqliteConnection,
         name: String,
-        agent_uuid: Option<String>,
+        agent_uuid: String,
     ) -> Result<Option<TypedProperty>> {
-        let property = match agent_uuid {
-            Some(uuid) => get_property_by_name_and_agent_uuid(conn, &name, uuid)?,
-            None => get_property_by_name(conn, &name)?,
-        };
+        let property = get_property_by_name_and_agent_uuid(conn, &name, agent_uuid)?;
         match property {
             Some(prop) => {
                 trace!(name = %name, "Property retrieved");
@@ -42,8 +41,21 @@ impl RepositoryGetSet<TypedProperty, Property> for PropertyRepository {
     }
 
     /// Set (update or create) a record
-    fn set(&self, conn: &mut SqliteConnection, entity: Property) -> Result<TypedProperty> {
-        if let Some(existing) = get_property_by_name(conn, &entity.name)? {
+    fn set(&self, conn: &mut SqliteConnection, mut entity: Property) -> Result<TypedProperty> {
+        if let Some(existing) =
+            get_property_by_name_and_agent_uuid(conn, &entity.name, entity.agent_uuid.clone())?
+        {
+            // Block type changes for config-owned properties
+            if existing.source.eq_ignore_ascii_case("config") && existing.type_ != entity.type_ {
+                return Err(DatabaseError::ValidationErrorCannotChangeConfigType(
+                    existing.type_,
+                    entity.type_,
+                ));
+            }
+
+            // Make sure we keep the source as the same
+            entity.source = existing.source.clone();
+
             if check_same(&existing, &entity) {
                 return convert_to_typed(existing);
             } else {
@@ -100,7 +112,9 @@ impl RepositoryGetSet<TypedProperty, Property> for PropertyRepository {
 
     /// Get a record OR Set (update or create) a record if that record does not exist
     fn get_or_set(&self, conn: &mut SqliteConnection, entity: Property) -> Result<TypedProperty> {
-        if let Some(existing) = get_property_by_name(conn, &entity.name)? {
+        if let Some(existing) =
+            get_property_by_name_and_agent_uuid(conn, &entity.name, entity.agent_uuid.clone())?
+        {
             return convert_to_typed(existing);
         } else {
             trace!(name = %entity.name, "Property does not exist, creating");
@@ -112,12 +126,9 @@ impl RepositoryGetSet<TypedProperty, Property> for PropertyRepository {
     fn get_all(
         &self,
         conn: &mut SqliteConnection,
-        agent_uuid: Option<String>,
+        agent_uuid: String,
     ) -> Result<Vec<TypedProperty>> {
-        let properties = match agent_uuid {
-            Some(uuid) => get_all_for_agent(conn, uuid)?,
-            None => get_all(conn)?,
-        };
+        let properties = get_all_for_agent(conn, agent_uuid)?;
 
         // let properties = get_all_for_agent(conn,)?;
         trace!(count = properties.len(), "All properties retrieved");
@@ -131,10 +142,22 @@ impl RepositoryGetSet<TypedProperty, Property> for PropertyRepository {
         name: String,
         agent_uuid: String,
     ) -> Result<usize> {
+        if let Some(existing) =
+            get_property_by_name_and_agent_uuid(conn, &name, agent_uuid.clone())?
+        {
+            if existing.source.eq_ignore_ascii_case("config") {
+                return Err(DatabaseError::ValidationError(format!(
+                    "Cannot delete property with type '{}' - these are system properties",
+                    existing.source
+                )));
+            }
+        }
+
         match diesel::delete(
             properties::table
                 .filter(properties::name.eq(&name))
-                .filter(properties::agent_uuid.eq(&agent_uuid)),
+                .filter(properties::agent_uuid.eq(&agent_uuid))
+                .filter(properties::source.ne("config")),
         )
         .execute(conn)
         {
@@ -151,8 +174,12 @@ impl RepositoryGetSet<TypedProperty, Property> for PropertyRepository {
 
     /// Delete all records
     fn delete_all(&self, conn: &mut SqliteConnection, agent_uuid: String) -> Result<usize> {
-        match diesel::delete(properties::table.filter(properties::agent_uuid.eq(&agent_uuid)))
-            .execute(conn)
+        match diesel::delete(
+            properties::table
+                .filter(properties::agent_uuid.eq(&agent_uuid))
+                .filter(sql::<Bool>("LOWER(TRIM(source)) <> 'config'")),
+        )
+        .execute(conn)
         {
             Ok(size) => {
                 info!(deleted = size, "All properties deleted");
