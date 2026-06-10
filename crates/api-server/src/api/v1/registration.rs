@@ -37,7 +37,7 @@ use uuid::Uuid;
 /// Security notes:
 /// - This endpoint does not issue credentials.
 /// - JWT issuance happens only after the signature is verified by `complete_registration_challenge`.
-#[endpoint(tags("Register Agent"), status_codes(200, 500), request_body=RegistrationChallengeRequest)]
+#[endpoint(tags("Register Agent"), status_codes(200, 400, 500), request_body=RegistrationChallengeRequest)]
 async fn registration_challenge(
     depot: &mut Depot,
     challenge_request: JsonBody<RegistrationChallengeRequest>,
@@ -106,7 +106,7 @@ async fn registration_challenge(
 /// Security notes:
 /// - The nonce is signed, not encrypted.
 /// - Signature verification uses Ed25519 and rejects malformed encodings and wrong key sizes.
-#[endpoint(tags("Register Agent"), status_codes(200, 500))]
+#[endpoint(tags("Register Agent"), status_codes(200, 400, 404, 500))]
 pub async fn complete_registration_challenge(
     depot: &mut Depot,
     complete_challenge_request: JsonBody<CompleteRegistrationRequest>,
@@ -142,7 +142,7 @@ pub async fn complete_registration_challenge(
         warn!(challenge_id=%challenge_id,
             "Registation Challenge record not found",
         );
-        return Err(ApiError::DataAccessError(
+        return Err(ApiError::NotFoundError(
             format!(
                 "Registration challenge with id: '{}' not found",
                 challenge_id
@@ -250,7 +250,7 @@ pub async fn complete_registration_challenge(
     debug!(count=%count_jti_deactivated,agent_id=%challenge.registration_id,"Deactivated JTI records");
 
     // Save the new JTI So that it can be invalidated when needed
-    let agent_jwt_record = agent_jwt_repo.create(
+    let _agent_jwt_record = agent_jwt_repo.create(
         &mut db_connection,
         NewAgentJwt {
             registration_id: agent_identity.agent_uuid.clone(),
@@ -274,12 +274,20 @@ pub async fn complete_registration_challenge(
     }))
 }
 
+/// Build all V1 registration routes.
+///
+/// Mounted endpoints:
+/// - `POST /registration/challenge`
+/// - `POST /registration/complete`
 pub fn registration_router() -> Router {
     Router::new()
         .push(Router::with_path("registration/challenge").post(registration_challenge))
         .push(Router::with_path("registration/complete").post(complete_registration_challenge))
 }
 
+/// Compute a deterministic SHA-256 fingerprint from a base64url-encoded public key.
+///
+/// The resulting digest is returned as base64url without padding.
 fn compute_pubkey_fingerprint(public_key_b64u: &str) -> Result<String> {
     let pk_bytes = Base64UrlUnpadded::decode_vec(public_key_b64u)
         .map_err(|_| ApiError::BadRequest("Invalid public key encoding".to_string()))?;
@@ -287,6 +295,11 @@ fn compute_pubkey_fingerprint(public_key_b64u: &str) -> Result<String> {
     let digest = Sha256::digest(&pk_bytes);
     Ok(Base64UrlUnpadded::encode_string(&digest))
 }
+
+/// Verify an Ed25519 signature for the registration challenge nonce.
+///
+/// Inputs are expected as base64url (no padding). Any decode, size, key, or
+/// signature validation failure maps to `ApiError::BadRequest`.
 fn verify_challenge_signature(
     public_key_b64u: &str,
     nonce_b64u: &str,

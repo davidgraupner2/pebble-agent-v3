@@ -188,7 +188,7 @@ impl Writer for ApiError {
                     .brief("Decryption Failed")
                     .detail(format!("{}", error))
             }
-            ApiError::NotFoundError(error) => StatusError::bad_request()
+            ApiError::NotFoundError(error) => StatusError::not_found()
                 .brief("Not found")
                 .detail(format!("{}", error)),
             ApiError::SalvoError(error) => {
@@ -247,6 +247,11 @@ impl EndpointOutRegister for ApiError {
         operation.responses.insert(
             StatusCode::BAD_REQUEST.as_str(),
             oapi::Response::new("Bad request")
+                .add_content("application/json", StatusError::to_schema(components)),
+        );
+        operation.responses.insert(
+            StatusCode::UNAUTHORIZED.as_str(),
+            oapi::Response::new("Unauthorized")
                 .add_content("application/json", StatusError::to_schema(components)),
         );
     }

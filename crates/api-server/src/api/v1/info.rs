@@ -29,7 +29,7 @@ struct V1Info {
 /// Use this endpoint for quick service introspection and startup compatibility checks.
 /// The response includes protocol version, running binary version, instance identifier,
 /// a human-readable status, and the total number of registered agents.
-#[endpoint(security(("bearer_token"=[])), tags("Information"), status_codes(200, 500))]
+#[endpoint(security(("bearer_token"=[])), tags("Information"), status_codes(200, 401, 500))]
 async fn info(depot: &mut Depot) -> Result<Json<V1Info>> {
     let properties = RuntimeConstants::global();
     let agent_identity_repo = depot.repositories()?.agent_identity_repo;
@@ -50,6 +50,10 @@ async fn info(depot: &mut Depot) -> Result<Json<V1Info>> {
     Ok(Json(v1_info))
 }
 
+/// Build the V1 information route.
+///
+/// Mounted endpoint:
+/// - `GET /info`
 pub fn info_router() -> Router {
     Router::with_path("info").get(info)
 }
