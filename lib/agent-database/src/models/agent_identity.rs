@@ -1,11 +1,12 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use salvo::oapi::ToSchema;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::schema::agent_identities;
 
-#[derive(Queryable, Selectable, Identifiable, Debug, Clone, Serialize, Deserialize)]
+#[derive(Queryable, Selectable, Identifiable, Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[diesel(table_name = agent_identities)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct AgentIdentity {
@@ -13,6 +14,18 @@ pub struct AgentIdentity {
     pub registration_id: String,
     pub pubkey_fingerprint: String,
     pub pubkey_b64u: String,
+    pub agent_id: String,
+    pub status: String,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+#[derive(Queryable, Selectable, Identifiable, Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[diesel(table_name = agent_identities)]
+#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+pub struct SecureAgentIdentity {
+    pub id: i32,
+    pub registration_id: String,
     pub agent_id: String,
     pub status: String,
     pub created_at: NaiveDateTime,

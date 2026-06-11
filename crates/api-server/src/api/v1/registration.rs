@@ -260,7 +260,7 @@ pub async fn complete_registration_challenge(
     )?;
 
     info!(
-        agent_uuid = %&agent_identity.registration_id   ,challenge_id=%challenge_id,agent_id=%&challenge.registration_id,
+        registration_id = %&agent_identity.registration_id   ,challenge_id=%challenge_id,agent_id=%&challenge.registration_id,
         "Identification complete via registration challenge response"
     );
 
@@ -268,7 +268,7 @@ pub async fn complete_registration_challenge(
     let _ = registration_repo.delete_by_challenge_id(&mut db_connection, challenge_id);
 
     Ok(Json(CompleteRegistrationResponse {
-        agent_uuid: agent_identity.registration_id,
+        registration_id: agent_identity.registration_id,
         access_token: jwt,
         expires_in_sec: jwt_expiry_in_mins * 60,
     }))

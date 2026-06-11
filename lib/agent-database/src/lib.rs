@@ -67,10 +67,10 @@ pub use models::{
     FunctionHash, NewAgentIdentity, NewAgentJwt, NewAgentRegistrationChallenge, NewCache,
     NewConnectionStats, NewConnectionString, NewEncryptionKey, NewEvent, NewFunctionHash,
     NewRegistration, NewSecret, Property, PropertyRecord, PropertyValue, Registration, Secret,
-    SecretTypeInfo, SecretValue, SecretValueOrEncrypted, SecretWithTags, Tags, TypedProperty,
-    UpdateCache, UpdateCacheRequest, UpdateConnectionStats, UpdateConnectionString, UpdateEvent,
-    UpdateFunctionHash, UpdateProperty, UpdateSecret, UpdateSecretRequest, UpdatedApiEncryptionKey,
-    get_secret_type_info,
+    SecretTypeInfo, SecretValue, SecretValueOrEncrypted, SecretWithTags, SecureAgentIdentity, Tags,
+    TypedProperty, UpdateCache, UpdateCacheRequest, UpdateConnectionStats, UpdateConnectionString,
+    UpdateEvent, UpdateFunctionHash, UpdateProperty, UpdateSecret, UpdateSecretRequest,
+    UpdatedApiEncryptionKey, get_secret_type_info,
 };
 
 pub use repositories::connection_strings::ConnectionStringRepository;

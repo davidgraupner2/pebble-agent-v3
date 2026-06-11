@@ -28,7 +28,7 @@ pub struct RegistrationClaims {
 
 impl RegistrationClaims {
     pub fn new(
-        agent_uuid: String,
+        registration_id: String,
         jti: String,
         pubkey_fingerprint: Option<String>,
         expires_in_sec: Option<u64>,
@@ -37,7 +37,7 @@ impl RegistrationClaims {
         let api_id = RuntimeConstants::global().api_id().to_string();
         Self {
             iss: api_id.clone(),
-            sub: agent_uuid,
+            sub: registration_id,
             aud: api_id,
             jti,
             iat: now,

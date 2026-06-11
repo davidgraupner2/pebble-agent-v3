@@ -29,7 +29,7 @@ impl RegistrationChallengeRepository {
             .get_result(conn)?;
 
         info!(
-            agent_uuid = %new.registration_id,
+            registration_id = %new.registration_id,
             "Agent registration challenge created"
         );
 

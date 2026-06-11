@@ -192,7 +192,7 @@ diesel::table! {
 diesel::table! {
     properties (id) {
         id -> Integer,
-        agent_uuid -> Text,
+        registration_id -> Text,
         name -> Text,
         #[sql_name = "type"]
         type_ -> Text,

@@ -32,7 +32,7 @@ mod secrets;
 mod tags;
 
 // Public re-exports
-pub use agent_identity::{AgentIdentity, NewAgentIdentity};
+pub use agent_identity::{AgentIdentity, NewAgentIdentity, SecureAgentIdentity};
 pub use agent_jwt::{AgentJwt, AgentJwtStatus, NewAgentJwt};
 pub use cache::{
     Cache, CacheWithTags, CreateCacheRequest, NewCache, UpdateCache, UpdateCacheRequest,

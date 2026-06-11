@@ -1,9 +1,9 @@
 use crate::api::extensions::DepotExt;
 use crate::error::Result;
-use crate::RuntimeConstants;
+use agent_core::prelude::*;
+use agent_database::{AgentIdentity, SecureAgentIdentity};
 use salvo::prelude::*;
 use serde::Serialize;
-
 #[derive(Serialize, ToSchema)]
 /// Public service metadata returned by the V1 info endpoint.
 ///
@@ -21,7 +21,9 @@ struct V1Info {
     /// `Ok` indicates the server is reachable and responded successfully.
     status: String,
     /// Number of agent identities currently registered in the backing database.
-    agents_registered: i64,
+    registration_total: i64,
+    /// Actual records of agent identities currently registered in the backing database.
+    registrations: Vec<SecureAgentIdentity>,
 }
 
 /// Returns high-level API server metadata.
@@ -36,6 +38,7 @@ async fn info(depot: &mut Depot) -> Result<Json<V1Info>> {
 
     let mut db_connection = depot.db_conn()?;
     let agent_count = agent_identity_repo.get_count(&mut db_connection)?;
+    let agent_identities = agent_identity_repo.get_all(&mut db_connection)?;
 
     let version = properties.version();
 
@@ -44,7 +47,8 @@ async fn info(depot: &mut Depot) -> Result<Json<V1Info>> {
         binary_version: version.to_string(),
         id: properties.api_id().to_string(),
         status: "Ok".to_string(),
-        agents_registered: agent_count,
+        registration_total: agent_count,
+        registrations: agent_identities,
     };
 
     Ok(Json(v1_info))

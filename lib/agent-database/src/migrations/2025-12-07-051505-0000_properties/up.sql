@@ -1,6 +1,6 @@
 CREATE TABLE properties (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    agent_uuid TEXT NOT NULL,
+    registration_id TEXT NOT NULL,
     name VARCHAR NOT NULL UNIQUE,
     type VARCHAR NOT NULL CHECK(type IN ('int', 'string', 'bool', 'json')),
     description VARCHAR,
@@ -13,7 +13,7 @@ CREATE TABLE properties (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX idx_properties_agent_name ON properties(agent_uuid,name);
+CREATE UNIQUE INDEX idx_properties_agent_name ON properties(registration_id,name);
 CREATE UNIQUE INDEX idx_properties_name ON properties(name);
 
 -- Ensure exactly one value column is set based on property

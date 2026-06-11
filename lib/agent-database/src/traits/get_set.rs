@@ -11,7 +11,7 @@ pub trait RepositoryGetSet<Entity, NewUpdatedEntity> {
         &self,
         conn: &mut SqliteConnection,
         name: String,
-        agent_uuid: String,
+        registration_id: String,
     ) -> Result<Option<Entity>>;
 
     /// Set a specific record
@@ -27,16 +27,16 @@ pub trait RepositoryGetSet<Entity, NewUpdatedEntity> {
     fn get_or_set(&self, conn: &mut SqliteConnection, entity: NewUpdatedEntity) -> Result<Entity>;
 
     /// Get all property records
-    fn get_all(&self, conn: &mut SqliteConnection, agent_uuid: String) -> Result<Vec<Entity>>;
+    fn get_all(&self, conn: &mut SqliteConnection, registration_id: String) -> Result<Vec<Entity>>;
 
     /// Delete a record by name
     fn delete(
         &self,
         conn: &mut SqliteConnection,
         name: String,
-        agent_uuid: String,
+        registration_id: String,
     ) -> Result<usize>;
 
     /// Delete all records
-    fn delete_all(&self, conn: &mut SqliteConnection, agent_uuid: String) -> Result<usize>;
+    fn delete_all(&self, conn: &mut SqliteConnection, registration_id: String) -> Result<usize>;
 }

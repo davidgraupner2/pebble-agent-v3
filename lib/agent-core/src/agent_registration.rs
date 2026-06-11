@@ -87,7 +87,7 @@ pub struct CompleteRegistrationRequest {
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CompleteRegistrationResponse {
     /// Server-side unique identity for the registered agent.
-    pub agent_uuid: String,
+    pub registration_id: String,
     /// JWT access token for authenticated API calls.
     pub access_token: String,
     /// Access token lifetime in seconds.

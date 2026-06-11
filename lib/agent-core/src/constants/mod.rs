@@ -5,7 +5,6 @@ use base64::prelude::*;
 use machineid_rs::{Encryption, HWIDComponent, IdBuilder};
 use std::collections::BTreeMap;
 use std::env;
-use std::env::home_dir;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -13,7 +12,7 @@ use std::sync::RwLock;
 use sysinfo::System;
 
 // Global constants used by all consumers
-pub const DATABASE_NAME: &str = "agent.db";
+pub const DATABASE_NAME: &str = "api_server.db";
 // pub const REGISTRATION_KEY_FILE: &str = "agent.key.json";
 pub const AGENT_SOURCE: &str = "agent";
 pub const ACTOR_API_NAME: &str = "API Server";

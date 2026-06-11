@@ -25,9 +25,9 @@ impl RepositoryGetSet<TypedProperty, Property> for PropertyRepository {
         &self,
         conn: &mut SqliteConnection,
         name: String,
-        agent_uuid: String,
+        registration_id: String,
     ) -> Result<Option<TypedProperty>> {
-        let property = get_property_by_name_and_agent_uuid(conn, &name, agent_uuid)?;
+        let property = get_property_by_name_and_registration_id(conn, &name, registration_id)?;
         match property {
             Some(prop) => {
                 trace!(name = %name, "Property retrieved");
@@ -42,9 +42,11 @@ impl RepositoryGetSet<TypedProperty, Property> for PropertyRepository {
 
     /// Set (update or create) a record
     fn set(&self, conn: &mut SqliteConnection, mut entity: Property) -> Result<TypedProperty> {
-        if let Some(existing) =
-            get_property_by_name_and_agent_uuid(conn, &entity.name, entity.agent_uuid.clone())?
-        {
+        if let Some(existing) = get_property_by_name_and_registration_id(
+            conn,
+            &entity.name,
+            entity.registration_id.clone(),
+        )? {
             // Block type changes for config-owned properties
             if existing.source.eq_ignore_ascii_case("config") && existing.type_ != entity.type_ {
                 return Err(DatabaseError::ValidationErrorCannotChangeConfigType(
@@ -112,9 +114,11 @@ impl RepositoryGetSet<TypedProperty, Property> for PropertyRepository {
 
     /// Get a record OR Set (update or create) a record if that record does not exist
     fn get_or_set(&self, conn: &mut SqliteConnection, entity: Property) -> Result<TypedProperty> {
-        if let Some(existing) =
-            get_property_by_name_and_agent_uuid(conn, &entity.name, entity.agent_uuid.clone())?
-        {
+        if let Some(existing) = get_property_by_name_and_registration_id(
+            conn,
+            &entity.name,
+            entity.registration_id.clone(),
+        )? {
             return convert_to_typed(existing);
         } else {
             trace!(name = %entity.name, "Property does not exist, creating");
@@ -126,9 +130,9 @@ impl RepositoryGetSet<TypedProperty, Property> for PropertyRepository {
     fn get_all(
         &self,
         conn: &mut SqliteConnection,
-        agent_uuid: String,
+        registration_id: String,
     ) -> Result<Vec<TypedProperty>> {
-        let properties = get_all_for_agent(conn, agent_uuid)?;
+        let properties = get_all_for_agent(conn, registration_id)?;
 
         // let properties = get_all_for_agent(conn,)?;
         trace!(count = properties.len(), "All properties retrieved");
@@ -140,10 +144,10 @@ impl RepositoryGetSet<TypedProperty, Property> for PropertyRepository {
         &self,
         conn: &mut SqliteConnection,
         name: String,
-        agent_uuid: String,
+        registration_id: String,
     ) -> Result<usize> {
         if let Some(existing) =
-            get_property_by_name_and_agent_uuid(conn, &name, agent_uuid.clone())?
+            get_property_by_name_and_registration_id(conn, &name, registration_id.clone())?
         {
             if existing.source.eq_ignore_ascii_case("config") {
                 return Err(DatabaseError::ValidationError(format!(
@@ -156,7 +160,7 @@ impl RepositoryGetSet<TypedProperty, Property> for PropertyRepository {
         match diesel::delete(
             properties::table
                 .filter(properties::name.eq(&name))
-                .filter(properties::agent_uuid.eq(&agent_uuid))
+                .filter(properties::registration_id.eq(&registration_id))
                 .filter(properties::source.ne("config")),
         )
         .execute(conn)
@@ -173,10 +177,10 @@ impl RepositoryGetSet<TypedProperty, Property> for PropertyRepository {
     }
 
     /// Delete all records
-    fn delete_all(&self, conn: &mut SqliteConnection, agent_uuid: String) -> Result<usize> {
+    fn delete_all(&self, conn: &mut SqliteConnection, registration_id: String) -> Result<usize> {
         match diesel::delete(
             properties::table
-                .filter(properties::agent_uuid.eq(&agent_uuid))
+                .filter(properties::registration_id.eq(&registration_id))
                 .filter(sql::<Bool>("LOWER(TRIM(source)) <> 'config'")),
         )
         .execute(conn)
@@ -246,15 +250,15 @@ fn get_property_by_name(conn: &mut SqliteConnection, name: &str) -> Result<Optio
         .map_err(Into::into)
 }
 
-/// Retrieves a property by name and agent_uuid
-fn get_property_by_name_and_agent_uuid(
+/// Retrieves a property by name and registration_id
+fn get_property_by_name_and_registration_id(
     conn: &mut SqliteConnection,
     name: &str,
-    agent_uuid: String,
+    registration_id: String,
 ) -> Result<Option<PropertyRecord>> {
     properties::table
         .filter(properties::name.eq(name))
-        .filter(properties::agent_uuid.eq(agent_uuid))
+        .filter(properties::registration_id.eq(registration_id))
         .select(PropertyRecord::as_select())
         .first(conn)
         .optional()
@@ -269,7 +273,7 @@ fn update_property(
 ) -> Result<TypedProperty> {
     let property_to_update = UpdateProperty {
         id,
-        agent_uuid: update.agent_uuid,
+        registration_id: update.registration_id,
         name: update.name,
         type_: update.type_,
         source: update.source,
@@ -332,10 +336,10 @@ fn get_all(conn: &mut SqliteConnection) -> Result<Vec<TypedProperty>> {
 /// Retrieves all properties
 fn get_all_for_agent(
     conn: &mut SqliteConnection,
-    agent_uuid: String,
+    registration_id: String,
 ) -> Result<Vec<TypedProperty>> {
     properties::table
-        .filter(properties::agent_uuid.eq(agent_uuid))
+        .filter(properties::registration_id.eq(registration_id))
         .select(PropertyRecord::as_select())
         .load(conn)
         .map_err(Into::into)

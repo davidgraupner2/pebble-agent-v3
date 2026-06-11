@@ -1,7 +1,9 @@
+use crate::SecureAgentIdentity;
 use crate::errors::Result;
 use crate::models::{AgentIdentity, NewAgentIdentity};
 use crate::schema::agent_identities::dsl::*;
 use diesel::associations::HasTable;
+use diesel::dsl::sql;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use tracing::{debug, info};
@@ -50,7 +52,7 @@ impl AgentIdentityRepository {
         Ok(result)
     }
 
-    pub fn get_by_uuid(
+    pub fn get_by_registration_id(
         &self,
         conn: &mut SqliteConnection,
         uuid: &str,
@@ -59,6 +61,14 @@ impl AgentIdentityRepository {
             .filter(registration_id.eq(uuid))
             .first::<AgentIdentity>(conn)
             .optional()?;
+
+        Ok(result)
+    }
+
+    pub fn get_all(&self, conn: &mut SqliteConnection) -> Result<Vec<SecureAgentIdentity>> {
+        let result = agent_identities
+            .select(SecureAgentIdentity::as_select())
+            .load::<SecureAgentIdentity>(conn)?;
 
         Ok(result)
     }

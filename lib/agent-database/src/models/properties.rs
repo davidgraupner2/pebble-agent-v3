@@ -1,5 +1,4 @@
 use crate::schema::properties;
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use salvo::oapi::ToSchema;
 use serde::{Deserialize, Serialize};
@@ -10,7 +9,7 @@ use std::fmt::Display;
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct PropertyRecord {
     pub id: i32,
-    pub agent_uuid: String,
+    pub registration_id: String,
     pub name: String,
     #[serde(rename = "type")]
     pub type_: String,
@@ -27,7 +26,7 @@ pub struct PropertyRecord {
 #[derive(Insertable, Debug)]
 #[diesel(table_name = properties)]
 pub struct Property {
-    pub agent_uuid: String,
+    pub registration_id: String,
     pub name: String,
     pub type_: String,
     pub description: Option<String>,
@@ -54,7 +53,7 @@ impl Display for Property {
         write!(
             f,
             "Property '{:?}-{}' [{}]: {}{}",
-            self.agent_uuid,
+            self.registration_id,
             self.name,
             self.type_,
             value_display,
@@ -70,7 +69,7 @@ impl Display for Property {
 #[diesel(table_name = properties)]
 pub struct UpdateProperty {
     pub id: i32,
-    pub agent_uuid: String,
+    pub registration_id: String,
     pub name: String,
     pub type_: String,
     pub description: Option<String>,
@@ -100,7 +99,7 @@ pub enum PropertyValue {
 pub struct TypedProperty {
     pub id: i32,
     #[cfg_attr(not(debug_assertions), serde(skip_serializing))]
-    pub agent_uuid: String,
+    pub registration_id: String,
     pub name: String,
     pub description: Option<String>,
     pub source: String,
@@ -129,7 +128,7 @@ impl PropertyRecord {
     pub fn to_typed(&self) -> Option<TypedProperty> {
         self.value().map(|v| TypedProperty {
             id: self.id,
-            agent_uuid: self.agent_uuid.clone(),
+            registration_id: self.registration_id.clone(),
             name: self.name.clone(),
             description: self.description.clone(),
             source: self.source.clone(),
@@ -145,14 +144,14 @@ impl PropertyValue {
     pub fn to_new_property(
         self,
         name: String,
-        agent_uuid: String,
+        registration_id: String,
         description: Option<String>,
         source: String,
     ) -> Property {
         match self {
             PropertyValue::Int(v) => Property {
                 name,
-                agent_uuid,
+                registration_id,
                 type_: "int".to_string(),
                 description,
                 source,
@@ -163,7 +162,7 @@ impl PropertyValue {
             },
             PropertyValue::String(v) => Property {
                 name,
-                agent_uuid,
+                registration_id,
                 type_: "string".to_string(),
                 description,
                 source,
@@ -174,7 +173,7 @@ impl PropertyValue {
             },
             PropertyValue::Bool(v) => Property {
                 name,
-                agent_uuid,
+                registration_id,
                 type_: "bool".to_string(),
                 description,
                 source,
@@ -185,7 +184,7 @@ impl PropertyValue {
             },
             PropertyValue::Json(v) => Property {
                 name,
-                agent_uuid,
+                registration_id,
                 type_: "json".to_string(),
                 description,
                 source,
