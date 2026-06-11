@@ -1,3 +1,5 @@
+use salvo::extract::{Extractible, Metadata};
+use salvo::prelude::*;
 use std::collections::HashMap;
 
 /// Dynamic filter operators for building flexible queries
@@ -231,5 +233,57 @@ impl DeleteQuery {
         }
 
         Ok(())
+    }
+}
+
+impl<'de> Extractible<'de> for DynamicQuery {
+    fn metadata() -> &'static Metadata {
+        static METADATA: Metadata = Metadata::new("metadata");
+        &METADATA
+    }
+
+    fn extract(
+        req: &'de mut Request,
+        _depot: &'de mut Depot,
+    ) -> impl Future<Output = Result<Self, impl Writer + Send + std::fmt::Debug + 'static>> + Send
+    where
+        Self: Sized,
+    {
+        async {
+            // Extract query parameters into a HashMap
+            let params: HashMap<String, String> = req
+                .queries()
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect();
+
+            // Call your existing from_params function
+            Self::from_params(params).map_err(|err_msg| StatusError::bad_request().detail(err_msg))
+        }
+    }
+}
+
+impl<'de> Extractible<'de> for DeleteQuery {
+    fn metadata() -> &'static Metadata {
+        static METADATA: Metadata = Metadata::new("metadata");
+        &METADATA
+    }
+
+    fn extract(
+        req: &'de mut Request,
+        _depot: &'de mut Depot,
+    ) -> impl Future<Output = Result<Self, impl Writer + Send + std::fmt::Debug + 'static>> + Send
+    where
+        Self: Sized,
+    {
+        async {
+            let params: HashMap<String, String> = req
+                .queries()
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect();
+
+            Self::from_params(params).map_err(|err_msg| StatusError::bad_request().detail(err_msg))
+        }
     }
 }

@@ -165,6 +165,7 @@ diesel::allow_tables_to_appear_in_same_query!(encryption_keys, secrets, tags);
 diesel::table! {
     cache (id) {
         id -> Integer,
+        registration_id -> Text,
         name -> Text,
         description -> Nullable<Text>,
         #[sql_name = "type"]

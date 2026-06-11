@@ -1,10 +1,7 @@
-use std::any::Any;
-
 use crate::api::extensions::DepotExt;
 use crate::error::{ApiError, Result};
 use agent_database::DatabaseError::ValidationErrorCannotChangeConfigType;
 use agent_database::{Property, PropertyValue, RepositoryGetSet, TypedProperty};
-use diesel::result::Error::DatabaseError;
 use salvo::oapi::extract::JsonBody;
 use salvo::oapi::extract::PathParam;
 use salvo::prelude::*;

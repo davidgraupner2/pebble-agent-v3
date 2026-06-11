@@ -1,5 +1,6 @@
 CREATE TABLE cache (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    registration_id TEXT NOT NULL,
     name VARCHAR NOT NULL COLLATE NOCASE,
     description VARCHAR NULL,
     type VARCHAR NOT NULL,
@@ -9,6 +10,8 @@ CREATE TABLE cache (
     updated_at timestamp_with_timezone_text NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires_at NULL
 );
+
+CREATE UNIQUE INDEX idx_cache_registration_name ON properties(registration_id,name);
 
 CREATE TRIGGER cache_updated_at 
 AFTER UPDATE on cache

@@ -1,9 +1,10 @@
 use crate::schema::tags;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use salvo::oapi::ToSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Queryable, Selectable, Identifiable, PartialEq, Serialize, Debug, Clone)]
+#[derive(Queryable, Selectable, Identifiable, PartialEq, Serialize, Debug, Clone, ToSchema)]
 #[diesel(table_name = tags)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Tags {

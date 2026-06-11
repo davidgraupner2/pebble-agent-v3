@@ -13,7 +13,7 @@ CREATE TABLE properties (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX idx_properties_agent_name ON properties(registration_id,name);
+CREATE UNIQUE INDEX idx_properties_registration_name ON properties(registration_id,name);
 CREATE UNIQUE INDEX idx_properties_name ON properties(name);
 
 -- Ensure exactly one value column is set based on property

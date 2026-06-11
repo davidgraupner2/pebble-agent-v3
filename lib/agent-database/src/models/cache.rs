@@ -3,11 +3,12 @@ use crate::source_default;
 use crate::{models::Tags, schema::cache};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use salvo::oapi::ToSchema;
 use serde::{Deserialize, Serialize};
 
 // ============= RESPONSE TYPES =============
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone, ToSchema)]
 pub struct CacheWithTags {
     pub cache: Cache,
     #[serde(serialize_with = "serialize_tag_names")]
@@ -16,11 +17,12 @@ pub struct CacheWithTags {
 
 // ============= DATABASE/QUERYABLE TYPES =============
 
-#[derive(Queryable, Selectable, Identifiable, PartialEq, Serialize, Debug, Clone)]
+#[derive(Queryable, Selectable, Identifiable, PartialEq, Serialize, Debug, Clone, ToSchema)]
 #[diesel(table_name = cache)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Cache {
     pub id: i32,
+    pub registration_id: String,
     pub name: String,
     pub description: Option<String>,
     pub type_: String,
@@ -36,6 +38,7 @@ pub struct Cache {
 #[derive(Insertable, Deserialize, Clone, Debug)]
 #[diesel(table_name = cache)]
 pub struct NewCache {
+    pub registration_id: String,
     pub name: String,
     pub description: Option<String>,
     pub type_: String,
