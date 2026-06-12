@@ -112,6 +112,9 @@ fn build_filter_condition(
         ("expires_at", FilterOperator::Lt) => Ok(Box::new(
             cache::expires_at.lt(value_owned.clone()).assume_not_null(),
         )),
+        ("registration_id", FilterOperator::Eq) => {
+            Ok(Box::new(cache::source.eq(value_owned.clone())))
+        }
 
         _ => Err(DatabaseError::InvalidInput(format!(
             "Unsupported filter: {} with operator {:?}",

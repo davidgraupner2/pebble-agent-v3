@@ -172,7 +172,7 @@ impl Writer for ApiError {
 
                 StatusError::bad_request()
                     .brief("Bad request")
-                    .detail(format!("Bad Request - {}", error))
+                    .detail(error.to_string())
             }
             ApiError::DeSerializationError(error) => {
                 error!("Deserializing error: {}", error);
@@ -205,25 +205,37 @@ impl Writer for ApiError {
             }
         };
 
+        // Set the response status code
         res.status_code(status_error.code);
 
-        if let Some(cause) = status_error.cause {
-            res.render(Json(JsonErrorResponse {
-                brief: status_error.brief,
-                cause: Some(cause.to_string()),
-                code: status_error.code.as_u16(),
-                detail: status_error.detail,
-                name: status_error.name,
-            }))
+        let body = if let Some(msg) = status_error.detail {
+            ApiResponse::<()>::err(msg)
         } else {
-            res.render(Json(JsonErrorResponse {
-                brief: status_error.brief,
-                cause: None,
-                code: status_error.code.as_u16(),
-                detail: status_error.detail,
-                name: status_error.name,
-            }))
-        }
+            ApiResponse::<()>::err("Unknown Error")
+        };
+
+        res.status_code(status_error.code);
+        res.render(Json(body));
+
+        // if let Some(cause) = status_error.cause {
+        //     let response = ApiResponse::err(status_error.detail);
+
+        //     res.render(Json(JsonErrorResponse {
+        //         brief: status_error.brief,
+        //         cause: Some(cause.to_string()),
+        //         code: status_error.code.as_u16(),
+        //         detail: status_error.detail,
+        //         name: status_error.name,
+        //     }))
+        // } else {
+        //     res.render(Json(JsonErrorResponse {
+        //         brief: status_error.brief,
+        //         cause: None,
+        //         code: status_error.code.as_u16(),
+        //         detail: status_error.detail,
+        //         name: status_error.name,
+        //     }))
+        // }
     }
 }
 
@@ -231,6 +243,8 @@ pub type Result<T> = std::result::Result<T, ApiError>;
 
 use salvo::http::{StatusCode, StatusError};
 use salvo::oapi::{self, EndpointOutRegister, ToSchema};
+
+use crate::responses::ApiResponse;
 
 impl EndpointOutRegister for ApiError {
     fn register(components: &mut oapi::Components, operation: &mut oapi::Operation) {

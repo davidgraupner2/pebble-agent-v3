@@ -22,6 +22,8 @@ pub struct CacheWithTags {
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Cache {
     pub id: i32,
+    // #[cfg_attr(not(debug_assertions), serde(skip_serializing))]
+    #[serde(skip_serializing)]
     pub registration_id: String,
     pub name: String,
     pub description: Option<String>,
@@ -47,7 +49,7 @@ pub struct NewCache {
     pub expires_at: Option<NaiveDateTime>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, ToSchema)]
 pub struct CreateCacheRequest {
     pub name: String,
     pub description: Option<String>,
@@ -63,6 +65,7 @@ pub struct CreateCacheRequest {
 #[diesel(table_name = cache)]
 pub struct UpdateCache {
     pub id: i32,
+    pub registration_id: String,
     pub name: Option<String>,
     pub description: Option<String>,
     pub type_: Option<String>,

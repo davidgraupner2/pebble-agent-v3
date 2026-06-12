@@ -4,6 +4,7 @@ pub mod error;
 #[cfg(target_os = "linux")]
 pub mod linux;
 pub mod properties;
+pub mod responses;
 pub mod server_core;
 pub mod state;
 #[cfg(windows)]
