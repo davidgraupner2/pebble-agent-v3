@@ -1,5 +1,5 @@
 use crate::bootstrap_api_server;
-use crate::error::Result;
+use crate::error::AppResult;
 use crate::server_core::run_server_core;
 use crate::LOGGING_WORKER_GUARDS;
 use agent_core::prelude::RuntimeConstants;
@@ -7,7 +7,7 @@ use agent_logging::initialise_logging;
 use tokio::signal::unix::{signal, SignalKind};
 use tracing::{error, info};
 
-pub async fn run() -> Result<()> {
+pub async fn run() -> AppResult<()> {
     let bootstrap_parameters = bootstrap_api_server()?;
     let runtime_constants = RuntimeConstants::global();
 

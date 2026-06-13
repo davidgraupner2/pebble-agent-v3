@@ -1,4 +1,4 @@
-use crate::error::{ApiError, Result};
+use crate::error::{ApiError, AppResult};
 use agent_database::{
     query::{SortCondition, SortDirection},
     ConnectionStringRepository, EventRepository, Property, PropertyRepository, PropertyValue,
@@ -19,7 +19,7 @@ pub struct Config {
 }
 
 impl Config {
-    fn db_connection(&self) -> Result<PooledConnection<ConnectionManager<SqliteConnection>>> {
+    fn db_connection(&self) -> AppResult<PooledConnection<ConnectionManager<SqliteConnection>>> {
         match self.db_pool.get() {
             Ok(connection) => Ok(connection),
             Err(error) => Err(ApiError::DataAccessError(error.to_string())),
@@ -173,7 +173,7 @@ impl Config {
         value: i32,
         description: Option<&str>,
         registration_id: String,
-    ) -> Result<i32> {
+    ) -> AppResult<i32> {
         let mut conn = self.db_connection()?;
         let property = Property {
             name: name.to_string(),
@@ -203,7 +203,7 @@ impl Config {
         value: &str,
         description: Option<&str>,
         registration_id: String,
-    ) -> Result<String> {
+    ) -> AppResult<String> {
         let mut conn = self.db_connection()?;
         let property = Property {
             name: name.to_string(),
@@ -233,7 +233,7 @@ impl Config {
         value: bool,
         description: Option<&str>,
         registration_id: String,
-    ) -> Result<bool> {
+    ) -> AppResult<bool> {
         let mut conn = self.db_connection()?;
         let property = Property {
             name: name.to_string(),
@@ -263,7 +263,7 @@ impl Config {
         value: serde_json::Value,
         description: Option<&str>,
         registration_id: String,
-    ) -> Result<serde_json::Value> {
+    ) -> AppResult<serde_json::Value> {
         let mut conn = self.db_connection()?;
         let property = Property {
             name: name.to_string(),

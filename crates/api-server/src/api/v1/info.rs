@@ -1,5 +1,5 @@
 use crate::api::extensions::DepotExt;
-use crate::error::Result;
+use crate::error::AppResult;
 use agent_core::prelude::*;
 use agent_database::{AgentIdentity, SecureAgentIdentity};
 use salvo::prelude::*;
@@ -32,7 +32,7 @@ struct V1Info {
 /// The response includes protocol version, running binary version, instance identifier,
 /// a human-readable status, and the total number of registered agents.
 #[endpoint(security(("bearer_token"=[])), tags("Information"), status_codes(200, 401, 500))]
-async fn info(depot: &mut Depot) -> Result<Json<V1Info>> {
+async fn info(depot: &mut Depot) -> AppResult<Json<V1Info>> {
     let properties = RuntimeConstants::global();
     let agent_identity_repo = depot.repositories()?.agent_identity_repo;
 

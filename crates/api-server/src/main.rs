@@ -1,6 +1,6 @@
 use agent_core::prelude::*;
 use agent_logging::initialise_logging;
-use api_server::error::Result;
+use api_server::error::AppResult;
 #[cfg(windows)]
 use api_server::windows;
 use api_server::{bootstrap_api_server, server_core::run_server_core};
@@ -24,7 +24,7 @@ enum Commands {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> AppResult<()> {
     let cli = Cli::parse();
 
     if let Some(command) = cli.command {

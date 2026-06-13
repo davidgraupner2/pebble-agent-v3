@@ -1,12 +1,12 @@
 use salvo::oapi::ToSchema;
 use serde::Serialize;
 
-#[derive(Debug)]
-pub enum ApiResponseCause {
-    NOTFOUND,
-    EMPTY,
-    DELETED,
-}
+// #[derive(Debug)]
+// pub enum ApiResponseCause {
+//     NOTFOUND,
+//     EMPTY,
+//     DELETED,
+// }
 
 /// Generic API envelope for successful or error responses.
 #[derive(Debug, Serialize)]
@@ -19,8 +19,8 @@ where
     pub data: Option<T>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
-    #[serde(skip_serializing)]
-    pub cause: Option<ApiResponseCause>,
+    // #[serde(skip_serializing)]
+    // pub cause: Option<ApiResponseCause>,
 }
 
 /// Pagination metadata
@@ -76,27 +76,27 @@ where
             success: true,
             data: Some(data),
             error: None,
-            cause: None,
+            // cause: None,
         }
     }
 
     /// Success with no payload
-    #[allow(dead_code)]
-    pub fn ok_empty(cause: ApiResponseCause) -> Self {
-        ApiResponse {
-            success: true,
-            data: None,
-            error: None,
-            cause: Some(cause),
-        }
-    }
+    // #[allow(dead_code)]
+    // pub fn ok_empty(cause: ApiResponseCause) -> Self {
+    //     ApiResponse {
+    //         success: true,
+    //         data: None,
+    //         error: None,
+    //         cause: Some(cause),
+    //     }
+    // }
 
     pub fn err(msg: impl Into<String>) -> Self {
         ApiResponse {
             success: false,
             data: None,
             error: Some(msg.into()),
-            cause: None,
+            // cause: None,
         }
     }
 }

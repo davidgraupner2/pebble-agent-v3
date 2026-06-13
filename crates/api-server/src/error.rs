@@ -1,19 +1,8 @@
 use capitalize::Capitalize;
 use salvo::prelude::*;
-use serde::Serialize;
 use thiserror::Error;
-use tracing::error;
-
-#[derive(Serialize)]
-struct JsonErrorResponse {
-    brief: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    cause: Option<String>,
-    code: u16,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    detail: Option<String>,
-    name: String,
-}
+use tokio_cron_scheduler::JobSchedulerError;
+use tracing::{error, warn};
 
 #[derive(Error, Debug, ToSchema)]
 pub enum ApiError {
@@ -68,8 +57,14 @@ pub enum ApiError {
     #[error("{0}")]
     NotFoundError(String),
 
+    #[error("Endpoint not found: {0}")]
+    EndpointNotFoundError(String),
+
     #[error("{0}")]
     SalvoError(#[from] salvo::prelude::StatusError),
+
+    #[error("{0}")]
+    JobSchedulerError(String),
 }
 
 impl From<agent_database::DatabaseError> for ApiError {
@@ -81,6 +76,12 @@ impl From<agent_database::DatabaseError> for ApiError {
 impl From<serde_json::Error> for ApiError {
     fn from(e: serde_json::Error) -> Self {
         ApiError::JSONError(e.to_string())
+    }
+}
+
+impl From<JobSchedulerError> for ApiError {
+    fn from(e: JobSchedulerError) -> Self {
+        ApiError::JobSchedulerError(e.to_string())
     }
 }
 
@@ -203,6 +204,18 @@ impl Writer for ApiError {
                     .brief("Authorisation Error")
                     .detail(format!("{}", error))
             }
+            ApiError::EndpointNotFoundError(error) => {
+                warn!("Endpoint requested was not found: {}", error);
+                StatusError::not_found()
+                    .brief("Endpoint not found")
+                    .detail(format!("Endpoint not found: {}", error))
+            }
+            ApiError::JobSchedulerError(error) => {
+                warn!("Job scheduling error: {}", error);
+                StatusError::not_found()
+                    .brief("Job scheduling error")
+                    .detail(format!("Job scheduling error: {}", error))
+            }
         };
 
         // Set the response status code
@@ -216,30 +229,10 @@ impl Writer for ApiError {
 
         res.status_code(status_error.code);
         res.render(Json(body));
-
-        // if let Some(cause) = status_error.cause {
-        //     let response = ApiResponse::err(status_error.detail);
-
-        //     res.render(Json(JsonErrorResponse {
-        //         brief: status_error.brief,
-        //         cause: Some(cause.to_string()),
-        //         code: status_error.code.as_u16(),
-        //         detail: status_error.detail,
-        //         name: status_error.name,
-        //     }))
-        // } else {
-        //     res.render(Json(JsonErrorResponse {
-        //         brief: status_error.brief,
-        //         cause: None,
-        //         code: status_error.code.as_u16(),
-        //         detail: status_error.detail,
-        //         name: status_error.name,
-        //     }))
-        // }
     }
 }
 
-pub type Result<T> = std::result::Result<T, ApiError>;
+pub type AppResult<T> = std::result::Result<T, ApiError>;
 
 use salvo::http::{StatusCode, StatusError};
 use salvo::oapi::{self, EndpointOutRegister, ToSchema};

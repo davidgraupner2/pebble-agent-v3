@@ -58,6 +58,7 @@ pub struct CreateCacheRequest {
     #[serde(default = "source_default")]
     pub source: Option<String>,
     pub expires_at: Option<NaiveDateTime>,
+    pub ttl_seconds: Option<i64>,
     pub tags: Option<Vec<String>>,
 }
 

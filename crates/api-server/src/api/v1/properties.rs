@@ -1,5 +1,5 @@
 use crate::api::extensions::DepotExt;
-use crate::error::{ApiError, Result};
+use crate::error::{ApiError, AppResult};
 use agent_database::DatabaseError::ValidationErrorCannotChangeConfigType;
 use agent_database::{Property, PropertyValue, RepositoryGetSet, TypedProperty};
 use salvo::oapi::extract::JsonBody;
@@ -82,7 +82,10 @@ pub fn properties_router() -> Router {
 /// - Requires a valid bearer JWT.
 /// - Data access is tenant-scoped by registration identity.
 #[endpoint(security(("bearer_token"=[])),tags("Properties"), status_codes(200, 401, 404, 500))]
-async fn get_property(depot: &mut Depot, name: PathParam<String>) -> Result<Json<TypedProperty>> {
+async fn get_property(
+    depot: &mut Depot,
+    name: PathParam<String>,
+) -> AppResult<Json<TypedProperty>> {
     let property_repo = depot.repositories()?.properties_repo;
     let mut db_connection = depot.db_conn()?;
     let registration_id = depot.registration_id();
@@ -125,7 +128,7 @@ async fn get_property(depot: &mut Depot, name: PathParam<String>) -> Result<Json
 /// - Requires a valid bearer JWT.
 /// - Data access is tenant-scoped by registration identity.
 #[endpoint(security(("bearer_token"=[])),tags("Properties"), status_codes(200, 401, 404, 500))]
-async fn get_properties(depot: &mut Depot) -> Result<Json<Vec<TypedProperty>>> {
+async fn get_properties(depot: &mut Depot) -> AppResult<Json<Vec<TypedProperty>>> {
     let property_repo = depot.repositories()?.properties_repo;
     let mut db_connection = depot.db_conn()?;
     let registration_id = depot.registration_id();
@@ -170,7 +173,7 @@ async fn get_properties(depot: &mut Depot) -> Result<Json<Vec<TypedProperty>>> {
 async fn add_property(
     depot: &mut Depot,
     payload: JsonBody<UpsertPropertyRequest>,
-) -> Result<Json<TypedProperty>> {
+) -> AppResult<Json<TypedProperty>> {
     let property_repo = depot.repositories()?.properties_repo;
     let mut db_connection = depot.db_conn()?;
     let registration_id = depot.registration_id();
@@ -222,7 +225,7 @@ async fn add_property(
 async fn add_properties(
     depot: &mut Depot,
     payload: JsonBody<Vec<UpsertPropertyRequest>>,
-) -> Result<Json<Vec<TypedProperty>>> {
+) -> AppResult<Json<Vec<TypedProperty>>> {
     let property_repo = depot.repositories()?.properties_repo;
     let mut db_connection = depot.db_conn()?;
     let registration_id = depot.registration_id();
@@ -270,7 +273,7 @@ async fn add_properties(
 /// - Requires a valid bearer JWT.
 /// - Data mutation is tenant-scoped by registration identity.
 #[endpoint(security(("bearer_token"=[])),tags("Properties"), status_codes(200, 401, 404, 500))]
-async fn delete_property(depot: &mut Depot, name: PathParam<String>) -> Result<String> {
+async fn delete_property(depot: &mut Depot, name: PathParam<String>) -> AppResult<String> {
     let property_repo = depot.repositories()?.properties_repo;
     let mut db_connection = depot.db_conn()?;
     let registration_id = depot.registration_id();
@@ -319,7 +322,7 @@ async fn delete_property(depot: &mut Depot, name: PathParam<String>) -> Result<S
 /// - Requires a valid bearer JWT.
 /// - Data mutation is tenant-scoped by registration identity.
 #[endpoint(security(("bearer_token"=[])),tags("Properties"), status_codes(200, 401, 404, 500))]
-async fn delete_properties(depot: &mut Depot) -> Result<String> {
+async fn delete_properties(depot: &mut Depot) -> AppResult<String> {
     let property_repo = depot.repositories()?.properties_repo;
     let mut db_connection = depot.db_conn()?;
     let registration_id = depot.registration_id();

@@ -5,13 +5,14 @@ pub mod error;
 pub mod linux;
 pub mod properties;
 pub mod responses;
+pub mod scheduler;
 pub mod server_core;
 pub mod state;
 #[cfg(windows)]
 pub mod windows;
 
 use crate::config::Config;
-use crate::error::{ApiError, Result};
+use crate::error::{ApiError, AppResult};
 use crate::properties::*;
 use agent_core::prelude::*;
 use agent_database::{get_db_connection_pool, PropertyValue, RepositoryContainer};
@@ -56,7 +57,7 @@ pub static LOGGING_WORKER_GUARDS: OnceLock<Vec<WorkerGuard>> = OnceLock::new();
 
 // Bootstrap the API Server
 // - This sets up all prerequisite items such as the database
-pub fn bootstrap_api_server() -> Result<BootstrapParameters> {
+pub fn bootstrap_api_server() -> AppResult<BootstrapParameters> {
     // Initialize the global database pool
     let pool = initialise_database_pool()?;
 
@@ -95,7 +96,7 @@ pub fn bootstrap_api_server() -> Result<BootstrapParameters> {
 /// Initialize the global database pool
 ///
 /// Under the hood this leverages the agent_database crate that creates the database - if needed
-pub(crate) fn initialise_database_pool() -> Result<Pool<ConnectionManager<SqliteConnection>>> {
+pub(crate) fn initialise_database_pool() -> AppResult<Pool<ConnectionManager<SqliteConnection>>> {
     match get_db_connection_pool(
         RuntimeConstants::global().folders().supplementary_files(),
         DATABASE_NAME,
@@ -112,7 +113,7 @@ pub(crate) fn initialise_database_pool() -> Result<Pool<ConnectionManager<Sqlite
 pub(crate) fn initialise_global_config(
     pool: &Pool<ConnectionManager<SqliteConnection>>,
     repositories: &RepositoryContainer,
-) -> Result<Config> {
+) -> AppResult<Config> {
     // let pool = match DB_POOL.get() {
     //     Some(pool) => pool,
     //     None => {
@@ -166,7 +167,7 @@ pub(crate) fn initialise_global_config(
 /// Initialize default database properties
 ///
 /// Sets up default property values in the database. Creates properties if they don't exist.
-pub(crate) fn initialise_database_properties(config: &Config) -> Result<()> {
+pub(crate) fn initialise_database_properties(config: &Config) -> AppResult<()> {
     let api_id = RuntimeConstants::global().api_id();
 
     // match CONFIG.get() {
@@ -277,7 +278,7 @@ fn default_properties() -> Vec<DefaultProperty> {
 ///
 /// Returns a tuple of (logging_format, logging_level, logging_output) from the database,
 /// with sensible defaults if properties are not set.
-pub(crate) fn get_logging_properties(config: &Config) -> Result<(String, String, String)> {
+pub(crate) fn get_logging_properties(config: &Config) -> AppResult<(String, String, String)> {
     let api_id = RuntimeConstants::global().api_id();
     // match CONFIG.get() {
     //     Some(config) => {

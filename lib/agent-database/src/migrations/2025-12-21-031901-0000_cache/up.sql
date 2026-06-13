@@ -8,10 +8,11 @@ CREATE TABLE cache (
     source VARCHAR NOT NULL,
     created_at timestamp_with_timezone_text NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp_with_timezone_text NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at NULL
+    expires_at timestamp_with_timezone_text NULL
 );
 
-CREATE UNIQUE INDEX idx_cache_registration_name ON properties(registration_id,name);
+-- Unique Index to ensure no duplicates for each agent
+CREATE UNIQUE INDEX idx_cache_registration_name ON cache(registration_id,name);
 
 CREATE TRIGGER cache_updated_at 
 AFTER UPDATE on cache
@@ -20,5 +21,3 @@ BEGIN
     UPDATE cache SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
 END;
 
--- Unique Index to ensure no duplicates
-CREATE UNIQUE INDEX idx_cache ON cache(name  COLLATE NOCASE);

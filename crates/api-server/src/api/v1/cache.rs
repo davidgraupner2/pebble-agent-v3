@@ -1,7 +1,5 @@
-use std::collections::HashMap;
-
 use crate::api::extensions::DepotExt;
-use crate::error::{ApiError, Result};
+use crate::error::{ApiError, AppResult};
 use crate::responses::PaginatedApiResponse;
 use agent_database::query::{DynamicQuery, FilterCondition, FilterOperator};
 use agent_database::traits::{RepositoryByTags, RepositoryDynamicQuery};
@@ -9,6 +7,8 @@ use agent_database::{
     Cache, CacheWithTags, CreateCacheRequest, NewCache, RepositoryGenericInsert,
     RepositoryGenericUpdate, Tags, UpdateCache, UpdateCacheRequest,
 };
+use chrono::Timelike;
+use chrono::{Duration, NaiveDateTime, Utc};
 use diesel::{
     r2d2::{ConnectionManager, PooledConnection},
     SqliteConnection,
@@ -19,6 +19,7 @@ use salvo::prelude::*;
 use salvo::Extractible;
 use serde::Deserialize;
 use serde_json::Value;
+use std::collections::HashMap;
 use tracing::{debug, error, info, warn};
 
 /// Build all V1 cache routes.
@@ -52,7 +53,7 @@ const CACHE_ALLOWED_FIELDS: &[&str] = &[
 async fn get_cache_records(
     req: &mut Request,
     depot: &mut Depot,
-) -> Result<Json<PaginatedApiResponse<CacheWithTags>>> {
+) -> AppResult<Json<PaginatedApiResponse<CacheWithTags>>> {
     // Extract the filter conditions passed in
     let query = match DynamicQuery::extract(req, depot).await {
         Ok(q) => q,
@@ -124,7 +125,7 @@ async fn get_cache_records(
 async fn add_cache_record(
     depot: &mut Depot,
     payload: JsonBody<CreateCacheRequest>,
-) -> Result<Json<CacheWithTags>> {
+) -> AppResult<Json<CacheWithTags>> {
     let cache_repo = depot.repositories()?.cache_repo;
     let mut db_connection = depot.db_conn()?;
     let registration_id = depot.registration_id();
@@ -135,7 +136,7 @@ async fn add_cache_record(
     let new_cache_record = create_new_cache(proposed_cache_record.clone(), registration_id.clone());
 
     let cache_record = cache_repo
-        .create(&mut db_connection, new_cache_record)
+        .create(&mut db_connection, new_cache_record?)
         .map_err(|e| ApiError::DataAccessError(e.to_string()))?;
 
     // Now Create the tags for the new cache record
@@ -156,7 +157,7 @@ async fn add_cache_record(
 async fn add_cache_records(
     depot: &mut Depot,
     payload: JsonBody<Vec<CreateCacheRequest>>,
-) -> Result<Json<Vec<CacheWithTags>>> {
+) -> AppResult<Json<Vec<CacheWithTags>>> {
     let cache_repo = depot.repositories()?.cache_repo;
     let mut db_connection = depot.db_conn()?;
     let proposed_cache_records = payload.into_inner();
@@ -182,7 +183,7 @@ async fn add_cache_records(
         }
 
         // Collect all the new cache records
-        new_cache_records.push(create_new_cache(cache_record, registration_id));
+        new_cache_records.push(create_new_cache(cache_record, registration_id)?);
     }
 
     // Create all cache records
@@ -217,7 +218,7 @@ fn error_if_cache_already_exists(
     depot: &mut Depot,
     cache_name: impl Into<String> + Clone,
     registration_id: impl Into<String> + Clone,
-) -> Result<()> {
+) -> AppResult<()> {
     let cache_repo = depot.repositories()?.cache_repo;
     let mut db_connection = depot.db_conn()?;
 
@@ -260,16 +261,18 @@ fn build_cache_response(cache: Cache, tags: Vec<Tags>) -> CacheWithTags {
     }
 }
 
-fn create_new_cache(cache: CreateCacheRequest, registration_id: String) -> NewCache {
-    NewCache {
+fn create_new_cache(cache: CreateCacheRequest, registration_id: String) -> AppResult<NewCache> {
+    let expires_at = compute_expires_at(cache.expires_at, cache.ttl_seconds)?;
+
+    Ok(NewCache {
         registration_id,
         name: cache.name,
         description: cache.description,
         type_: cache.type_,
         value: cache.value,
         source: cache.source.unwrap_or_default(),
-        expires_at: cache.expires_at,
-    }
+        expires_at,
+    })
 }
 
 fn create_update_cache(cache: UpdateCacheRequest, registration_id: String) -> UpdateCache {
@@ -282,5 +285,24 @@ fn create_update_cache(cache: UpdateCacheRequest, registration_id: String) -> Up
         value: cache.value,
         source: cache.source,
         expires_at: cache.expires_at,
+    }
+}
+
+fn compute_expires_at(
+    explicit_expires_at: Option<NaiveDateTime>,
+    ttl_seconds: Option<i64>,
+) -> AppResult<Option<NaiveDateTime>> {
+    match (explicit_expires_at, ttl_seconds) {
+        (Some(ts), None) => Ok(Some(ts)),
+        (None, Some(ttl)) if ttl > 0 => {
+            let now = Utc::now().naive_utc();
+            let now = now.with_nanosecond(0).unwrap();
+            Ok(Some(now + Duration::seconds(ttl)))
+        }
+        (None, None) => Ok(None), // never expires
+        (Some(_), Some(_)) => Err(ApiError::BadRequest(
+            "Provide either expires_at or ttl_seconds, not both".to_string(),
+        )),
+        (None, Some(_)) => Err(ApiError::BadRequest("ttl_seconds must be > 0".to_string())),
     }
 }

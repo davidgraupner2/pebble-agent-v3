@@ -1,4 +1,4 @@
-use crate::error::{ApiError, Result};
+use crate::error::{ApiError, AppResult};
 use crate::properties::{DEFAULT_PROPERTY_API_JWT_EXPIRY_MINUTES, PROPERTY_API_JWT_EXPIRY_MINUTES};
 use crate::{
     api::extensions::DepotExt,
@@ -41,7 +41,7 @@ use uuid::Uuid;
 async fn registration_challenge(
     depot: &mut Depot,
     challenge_request: JsonBody<RegistrationChallengeRequest>,
-) -> Result<Json<RegistrationChallengeResponse>> {
+) -> AppResult<Json<RegistrationChallengeResponse>> {
     let registration_id = challenge_request.registration_id.clone();
     let api_id = RuntimeConstants::global().api_id();
     let registration_repo = depot.repositories()?.agent_registration_challenge_repo;
@@ -110,7 +110,7 @@ async fn registration_challenge(
 pub async fn complete_registration_challenge(
     depot: &mut Depot,
     complete_challenge_request: JsonBody<CompleteRegistrationRequest>,
-) -> Result<Json<CompleteRegistrationResponse>> {
+) -> AppResult<Json<CompleteRegistrationResponse>> {
     debug!(challenge_id = %complete_challenge_request.challenge_id,
         "Received registeration challenge response"
     );
@@ -288,7 +288,7 @@ pub fn registration_router() -> Router {
 /// Compute a deterministic SHA-256 fingerprint from a base64url-encoded public key.
 ///
 /// The resulting digest is returned as base64url without padding.
-fn compute_pubkey_fingerprint(public_key_b64u: &str) -> Result<String> {
+fn compute_pubkey_fingerprint(public_key_b64u: &str) -> AppResult<String> {
     let pk_bytes = Base64UrlUnpadded::decode_vec(public_key_b64u)
         .map_err(|_| ApiError::BadRequest("Invalid public key encoding".to_string()))?;
 
@@ -304,7 +304,7 @@ fn verify_challenge_signature(
     public_key_b64u: &str,
     nonce_b64u: &str,
     signature_b64u: &str,
-) -> Result<()> {
+) -> AppResult<()> {
     let pk_bytes = Base64UrlUnpadded::decode_vec(public_key_b64u)
         .map_err(|_| ApiError::BadRequest("Invalid public key".to_string()))?;
 
