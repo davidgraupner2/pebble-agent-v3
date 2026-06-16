@@ -15,6 +15,8 @@ pub const PROPERTY_API_CS_EXTRACT_ENVIRONMENT: &str = "api::connection_string::e
 pub const PROPERTY_API_JWT_EXPIRY_MINUTES: &str = "api::jwt_expiry_minutes";
 pub const PROPERTY_API_AGENT_REGISTRATION_EXPIRY_SECS: &str =
     "api::agent_registration_expiry_seconds";
+pub const PROPERTY_API_PURGE_EXPIRED_CACHE_RECORDS_SCHEDULE: &str =
+    "api::jobs::schedule::purge_expired_cache_records";
 
 // Property defaults, if properties not  loaded into the database
 pub const DEFAULT_PROPERTY_API_PORT: i32 = 8174;
@@ -25,3 +27,4 @@ pub const DEFAULT_PROPERTY_API_CS_VALIDATE_SECRET_PARAMETER_NAME: &str = "s";
 pub const DEFAULT_PROPERTY_API_CS_EXTRACT_ENVIRONMENT: &str = "sub:.*:0";
 pub const DEFAULT_PROPERTY_API_JWT_EXPIRY_MINUTES: i32 = 0;
 pub const DEFAULT_PROPERTY_API_AGENT_REGISTRATION_EXPIRY_SECS: i32 = 120;
+pub const DEFAULT_PROPERTY_API_PURGE_EXPIRED_CACHE_RECORDS_SCHEDULE: &str = "0/10 * * * * *";

@@ -34,6 +34,14 @@ use uuid::Uuid;
 ///   - `nonce_b64u` (random bytes to be signed by the matching private key)
 ///   - `expires_in_sec` (challenge validity window)
 ///
+/// Querystring guide:
+/// - This endpoint does not accept query parameters.
+///
+/// Response behavior:
+/// - `200`: challenge created and returned.
+/// - `400`: malformed request body.
+/// - `500`: challenge creation or persistence failure.
+///
 /// Security notes:
 /// - This endpoint does not issue credentials.
 /// - JWT issuance happens only after the signature is verified by `complete_registration_challenge`.
@@ -102,6 +110,15 @@ async fn registration_challenge(
 ///   3. submitted public key fingerprint matches challenge fingerprint
 ///   4. Ed25519 signature over `nonce_b64u` is valid
 /// - If all checks pass, the server creates or reuses the agent identity and returns a JWT.
+///
+/// Querystring guide:
+/// - This endpoint does not accept query parameters.
+///
+/// Response behavior:
+/// - `200`: challenge completed and access token returned.
+/// - `400`: challenge expired, malformed public key/signature, or signature verification failed.
+/// - `404`: challenge id not found.
+/// - `500`: repository or token-issuance failure.
 ///
 /// Security notes:
 /// - The nonce is signed, not encrypted.

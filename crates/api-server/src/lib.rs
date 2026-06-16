@@ -114,53 +114,11 @@ pub(crate) fn initialise_global_config(
     pool: &Pool<ConnectionManager<SqliteConnection>>,
     repositories: &RepositoryContainer,
 ) -> AppResult<Config> {
-    // let pool = match DB_POOL.get() {
-    //     Some(pool) => pool,
-    //     None => {
-    //         return Err(ApiError::ConfigError(
-    //             "Unable to initialise global config - Database pool could not be obtained"
-    //                 .to_string(),
-    //         ));
-    //     }
-    // };
-
     let property_repository = repositories.properties_repo.clone();
-
-    // let property_repository = match REPOSITORIES.get() {
-    //     Some(repository_container) => repository_container.properties_repo.clone(),
-    //     None => {
-    //         return Err(ApiError::ConfigError(
-    //             "Unable to initialise global config - Property repository could not be obtained"
-    //                 .to_string(),
-    //         ));
-    //     }
-    // };
-
-    // let connection_string_repository = match REPOSITORIES.get() {
-    //     Some(repository_container) => repository_container.connection_string_repo.clone(),
-    //     None => {
-    //         return Err(ApiError::ConfigError(
-    //             "Unable to initialise global config - Connection String repository could not be obtained"
-    //                 .to_string(),
-    //         ));
-    //     }
-    // };
-
-    // let events_repository = match REPOSITORIES.get() {
-    //     Some(repository_container) => repository_container.events_repo.clone(),
-    //     None => {
-    //         return Err(ApiError::ConfigError(
-    //             "Unable to initialise global config - Events repository could not be obtained"
-    //                 .to_string(),
-    //         ));
-    //     }
-    // };
 
     Ok(Config {
         db_pool: pool.clone(),
         property_repo: property_repository,
-        // connection_string_repo: connection_string_repository,
-        // event_repo: events_repository,
     })
 }
 
@@ -170,8 +128,6 @@ pub(crate) fn initialise_global_config(
 pub(crate) fn initialise_database_properties(config: &Config) -> AppResult<()> {
     let api_id = RuntimeConstants::global().api_id();
 
-    // match CONFIG.get() {
-    //     Some(config) => {
     for prop in default_properties() {
         match prop.value {
             PropertyValue::Int(val) => {
@@ -270,6 +226,11 @@ fn default_properties() -> Vec<DefaultProperty> {
             name: PROPERTY_API_AGENT_REGISTRATION_EXPIRY_SECS,
             value: PropertyValue::Int(DEFAULT_PROPERTY_API_AGENT_REGISTRATION_EXPIRY_SECS),
             description: Some("Indicates how many seconds to allow for an agent registration process to complete"),
+        },
+        DefaultProperty {
+            name: PROPERTY_API_PURGE_EXPIRED_CACHE_RECORDS_SCHEDULE,
+            value: PropertyValue::String(DEFAULT_PROPERTY_API_PURGE_EXPIRED_CACHE_RECORDS_SCHEDULE.to_string()),
+            description: Some("Indicates the schedule (cron format) for the 'purge_expired_cache_records job"),
         },
     ]
 }

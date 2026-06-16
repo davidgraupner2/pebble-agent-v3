@@ -6,6 +6,7 @@ use api_server::windows;
 use api_server::{bootstrap_api_server, server_core::run_server_core};
 use api_server::{LOGGING_WORKER_GUARDS, SERVICE_DISPLAY_NAME, SERVICE_NAME};
 use clap::{Parser, Subcommand};
+use tracing::{error, info};
 
 #[derive(Parser)]
 #[command(name = SERVICE_NAME)]
@@ -88,48 +89,13 @@ async fn main() -> AppResult<()> {
     // This allows us to write logs for as long as the api runs
     LOGGING_WORKER_GUARDS.set(worker_guards).unwrap();
 
-    // Start the listener on the loopback address and port
-    // let tcp_listener_address = format!("127.0.0.1:{}", bootstrap_parameters.port);
-    // let acceptor = TcpListener::new(tcp_listener_address).bind().await;
-
-    // // Create the API router
-    // // Injecting the DB Pool, DB repositories and the Config struct for API Global use
-    // let router = Router::new()
-    //     .hoop(inject(bootstrap_parameters.db_pool))
-    //     .hoop(inject(bootstrap_parameters.config))
-    //     .hoop(inject(bootstrap_parameters.repository_container))
-    //     // Non authenticated routes
-    //     .push(
-    //         Router::with_path("api/v1/")
-    //             // .push(info_router())
-    //             .push(registration_router()),
-    //     )
-    //     // Authenticated routes
-    //     .push(
-    //         Router::with_hoop(auth_jwt_middleware())
-    //             .hoop(verify_jti_middleware)
-    //             .push(Router::with_path("api/v1").push(info_router())),
-    //     );
-
-    // let doc = OpenApi::new("Pebble Agent Api", "1.0.0")
-    //     .merge_router(&router)
-    //     .add_security_scheme(
-    //         "bearer_token",
-    //         SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer).bearer_format("JWT")),
-    //     );
-    // let router = router
-    //     .push(doc.into_router("/api-doc/openapi.json"))
-    //     .push(SwaggerUi::new("/api-doc/openapi.json").into_router("/swagger-ui"))
-    //     .push(ReDoc::new("/api-doc/openapi.json").into_router("/redoc"));
-
-    // // Print router structure for debugging
-    // println!("{router:?}");
-
-    // // Start serving requests
-    // Server::new(acceptor).serve(router).await;
-
     let (_shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
-    run_server_core(bootstrap_parameters, shutdown_rx).await;
+    match run_server_core(bootstrap_parameters, shutdown_rx).await {
+        Ok(()) => {}
+        Err(error) => {
+            error!(errorMsg=%error,"Error starting up API Server")
+        }
+    }
 
     Ok(())
 }

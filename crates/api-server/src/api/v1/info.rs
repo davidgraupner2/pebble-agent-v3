@@ -31,6 +31,14 @@ struct V1Info {
 /// Use this endpoint for quick service introspection and startup compatibility checks.
 /// The response includes protocol version, running binary version, instance identifier,
 /// a human-readable status, and the total number of registered agents.
+///
+/// Querystring guide:
+/// - This endpoint does not accept query parameters.
+///
+/// Response behavior:
+/// - `200`: metadata returned.
+/// - `401`: missing or invalid bearer token.
+/// - `500`: repository or server failure.
 #[endpoint(security(("bearer_token"=[])), tags("Information"), status_codes(200, 401, 500))]
 async fn info(depot: &mut Depot) -> AppResult<Json<V1Info>> {
     let properties = RuntimeConstants::global();

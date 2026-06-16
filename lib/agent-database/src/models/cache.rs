@@ -27,6 +27,7 @@ pub struct Cache {
     pub registration_id: String,
     pub name: String,
     pub description: Option<String>,
+    #[serde(rename = "type")]
     pub type_: String,
     pub value: String,
     pub source: String,
@@ -75,7 +76,7 @@ pub struct UpdateCache {
     pub expires_at: Option<NaiveDateTime>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, ToSchema)]
 pub struct UpdateCacheRequest {
     pub id: i32,
     pub name: Option<String>,
@@ -85,5 +86,6 @@ pub struct UpdateCacheRequest {
     #[serde(default = "source_default")]
     pub source: Option<String>,
     pub expires_at: Option<NaiveDateTime>,
+    pub ttl_seconds: Option<i64>,
     pub tags: Option<Vec<String>>,
 }

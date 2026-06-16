@@ -4,6 +4,7 @@ use crate::RepositoryDynamicQuery;
 use crate::errors::Result;
 use crate::models::{Cache, CacheTag, NewCache, Tags, UpdateCache};
 use crate::query::{DeleteQuery, FilterCondition, FilterOperator, SortCondition, SortDirection};
+use crate::repositories::enforce_tenant_filter;
 use crate::repositories::tags::{
     get_tag_ids, get_tag_names_for_filter_conditions, insert_or_get_tag,
 };
@@ -113,7 +114,7 @@ fn build_filter_condition(
             cache::expires_at.lt(value_owned.clone()).assume_not_null(),
         )),
         ("registration_id", FilterOperator::Eq) => {
-            Ok(Box::new(cache::source.eq(value_owned.clone())))
+            Ok(Box::new(cache::registration_id.eq(value_owned.clone())))
         }
 
         _ => Err(DatabaseError::InvalidInput(format!(
@@ -132,6 +133,7 @@ impl RepositoryDynamicQuery<Cache> for CacheRepository {
         sort: Option<&Vec<SortCondition>>,
         page_size: i64,
         page: i64,
+        registration_id: String,
     ) -> Result<(Vec<Cache>, i64)> {
         debug!(
             page,
@@ -140,6 +142,9 @@ impl RepositoryDynamicQuery<Cache> for CacheRepository {
             ?sort,
             "Retrieving page of Cache records"
         );
+
+        // Add the registration_id - tenancy filter
+        let filters = enforce_tenant_filter(filters, registration_id);
 
         // Separate tag filters from other filters
         let (tag_filters, cache_filters): (Vec<_>, Vec<_>) =
@@ -170,6 +175,8 @@ impl RepositoryDynamicQuery<Cache> for CacheRepository {
                 build_filter_condition(&filter.field, &filter.operator, &filter.value)?;
             count_query = count_query.filter(count_condition);
         }
+
+        // println!("SQL Query: {}", debug_query::<Sqlite, _>(&sql_query));
 
         // Apply sorting
         if let Some(sort) = sort {
@@ -238,8 +245,9 @@ impl RepositoryDynamicQuery<Cache> for CacheRepository {
         &self,
         conn: &mut SqliteConnection,
         query: &DeleteQuery,
+        registration_id: String,
     ) -> Result<usize> {
-        match self.get_by_dynamic_query(conn, &query.filters, None, 0, 0) {
+        match self.get_by_dynamic_query(conn, &query.filters, None, 0, 0, registration_id) {
             Ok((cache_records, num_records)) => conn
                 .transaction(|conn| {
                     for item in cache_records {

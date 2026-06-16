@@ -7,17 +7,36 @@ use crate::error::{ApiError, AppResult};
 use crate::scheduler::{setup_scheduler, ScheduledJobDependencies};
 use crate::BootstrapParameters;
 use agent_core::prelude::*;
-use agent_database::RepositoryContainer;
-use diesel::r2d2::{ConnectionManager, Pool};
-use diesel::SqliteConnection;
 use salvo::affix_state::inject;
 use salvo::catcher::Catcher;
-use salvo::http::response;
 use salvo::oapi::security::{Http, HttpAuthScheme, SecurityScheme};
 use salvo::prelude::*;
-use std::sync::Arc;
-use std::time::Duration;
-use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
+use salvo_jwt_auth::JwtAuthState::Unauthorized;
+use tracing::{error, info};
+
+#[handler]
+async fn handle_server_errors(
+    &self,
+    req: &Request,
+    _depot: &Depot,
+    res: &mut Response,
+    _ctrl: &mut FlowCtrl,
+) -> AppResult<()> {
+    // Check if the error is a 404 Not Found
+    if StatusCode::NOT_FOUND == res.status_code.unwrap_or(StatusCode::NOT_FOUND) {
+        let endpoint = req.uri().path().to_string();
+        return Err(ApiError::EndpointNotFoundError(endpoint));
+    } else if StatusCode::UNAUTHORIZED == res.status_code.unwrap_or(StatusCode::UNAUTHORIZED) {
+        return Err(ApiError::AuthorisationError(
+            "Bearer token not found".to_string(),
+        ));
+    } else if StatusCode::METHOD_NOT_ALLOWED
+        == res.status_code.unwrap_or(StatusCode::METHOD_NOT_ALLOWED)
+    {
+        return Err(ApiError::BadRequest("HTTP Method not allowed".to_string()));
+    }
+    Ok(())
+}
 
 #[handler]
 async fn handle404(
@@ -31,11 +50,23 @@ async fn handle404(
     if StatusCode::NOT_FOUND == res.status_code.unwrap_or(StatusCode::NOT_FOUND) {
         let endpoint = req.uri().path().to_string();
         return Err(ApiError::EndpointNotFoundError(endpoint));
+    }
+    Ok(())
+}
 
-        // // Return custom error page
-        // res.render("Custom 404 Error Page");
-        // // Skip remaining error handlers
-        // ctrl.skip_rest();
+#[handler]
+async fn handle_unauthorised(
+    &self,
+    _req: &Request,
+    _depot: &Depot,
+    res: &mut Response,
+    _ctrl: &mut FlowCtrl,
+) -> AppResult<()> {
+    // Check if the error is a 401 Unauthorised
+    if StatusCode::UNAUTHORIZED == res.status_code.unwrap_or(StatusCode::UNAUTHORIZED) {
+        return Err(ApiError::AuthorisationError(
+            "Bearer token not found".to_string(),
+        ));
     }
     Ok(())
 }
@@ -44,13 +75,15 @@ pub async fn run_server_core(
     bootstrap_parameters: BootstrapParameters,
     shutdown_rx: tokio::sync::oneshot::Receiver<()>,
 ) -> AppResult<()> {
-    // Save the scheduled job dependecies we need
+    // Store the scheduled job dependecies we need
+    // The DB Pool and the DB Repositories
     let job_dependencies = ScheduledJobDependencies {
         db_pool: bootstrap_parameters.db_pool.clone(),
         repos: bootstrap_parameters.repository_container.clone(),
+        config: bootstrap_parameters.config.clone(),
     };
 
-    //create the cron job scheduler
+    //Setup and start the job scheduler
     let scheduler = setup_scheduler(job_dependencies).await?;
     scheduler.start().await?;
 
@@ -91,7 +124,9 @@ pub async fn run_server_core(
         .await;
 
     // Build service (router + catcher)
-    let service = Service::new(router).catcher(Catcher::default().hoop(handle404));
+    let service = Service::new(router).catcher(Catcher::default().hoop(handle_server_errors));
+    // .catcher(Catcher::default().hoop(handle404))
+    // .catcher(Catcher::default().hoop(handle_unauthorised));
 
     // Create server instance
     let server = Server::new(acceptor);
@@ -103,7 +138,7 @@ pub async fn run_server_core(
     tokio::spawn(async move {
         // Wait for the OS wrapper (Windows SCM or Linux SIGTERM) to signal us
         if shutdown_rx.await.is_ok() {
-            println!("OS termination signal received. Initiating Salvo graceful shutdown...");
+            println!("OS termination signal received. Initiating API Server shutdown...");
             handle.stop_graceful(None);
         }
     });
@@ -111,28 +146,5 @@ pub async fn run_server_core(
     // Start serving
     server.serve(service).await;
 
-    // Spawn the shutdown monitor task
-    // tokio::spawn(async move {
-    //     // Wait for the OS wrapper (Windows SCM or Linux SIGTERM) to signal us
-    //     if let Ok(_) = shutdown_rx.await {
-    //         println!("OS termination signal received. Initiating Salvo graceful shutdown...");
-    //         // Stop gracefully, giving existing connections up to 10 seconds to finish
-    //         handle.stop_graceful(Some(Duration::from_secs(10)));
-    //     }
-    // });
-
-    // // Start the Salvo server. This blocks until `stop_graceful` finishes executing.
-    // if let Err(e) = server.try_serve(router).await {
-    //     eprintln!("Salvo server error: {}", e);
-    // }
-
-    // server.serve(router).await;
-
-    // Print router structure for debugging
-    // println!("{router:?}");
-
-    // Start serving requests
-    // let server = Server::new(acceptor).serve(router).await;
-    // let
     Ok(())
 }

@@ -12,11 +12,13 @@ pub trait RepositoryDynamicQuery<Entity> {
         sort: Option<&Vec<SortCondition>>,
         page_size: i64,
         page_offset: i64,
+        registry_id: String,
     ) -> Result<(Vec<Entity>, i64)>;
 
     fn delete_by_dynamic_query(
         &self,
         conn: &mut SqliteConnection,
         query: &DeleteQuery,
+        registration_id: String,
     ) -> Result<usize>;
 }

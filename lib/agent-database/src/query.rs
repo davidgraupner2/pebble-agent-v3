@@ -1,3 +1,4 @@
+use diesel::result::DatabaseErrorInformation;
 use salvo::extract::{Extractible, Metadata};
 use salvo::prelude::*;
 use std::collections::HashMap;
@@ -68,6 +69,7 @@ pub struct DynamicQuery {
 #[derive(Debug)]
 pub struct DeleteQuery {
     pub filters: Vec<FilterCondition>,
+    pub confirm_delete_all: bool,
 }
 
 impl DynamicQuery {
@@ -189,8 +191,20 @@ impl DeleteQuery {
     pub fn from_params(mut params: HashMap<String, String>) -> Result<Self, String> {
         let mut filters = Vec::new();
 
-        // Remove confirm_delete_all key before iterating
-        params.remove("confirm_delete_all");
+        let confirm_delete_all = params
+            .iter()
+            .find(|(k, _)| k.eq_ignore_ascii_case("confirm_delete_all"))
+            .map(|(_, v)| v.eq_ignore_ascii_case("true"))
+            .unwrap_or(false);
+
+        // Remove confirm_delete_all key before iterating.
+        if let Some(confirm_key) = params
+            .keys()
+            .find(|k| k.eq_ignore_ascii_case("confirm_delete_all"))
+            .cloned()
+        {
+            params.remove(&confirm_key);
+        }
 
         // Process all params
         for (key, value) in &params {
@@ -218,7 +232,10 @@ impl DeleteQuery {
             }
         }
 
-        Ok(DeleteQuery { filters })
+        Ok(DeleteQuery {
+            filters,
+            confirm_delete_all,
+        })
     }
 
     /// Validate that only allowed fields are being used
@@ -257,8 +274,8 @@ impl<'de> Extractible<'de> for DynamicQuery {
                 .map(|(k, v)| (k.to_string(), v.to_string()))
                 .collect();
 
-            // Call your existing from_params function
-            Self::from_params(params).map_err(|err_msg| StatusError::bad_request().detail(err_msg))
+            // Convert parser errors into a proper HTTP 400 status error.
+            Self::from_params(params).map_err(|err_msg| err_msg)
         }
     }
 }

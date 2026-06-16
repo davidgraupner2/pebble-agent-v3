@@ -138,6 +138,7 @@ impl RepositoryDynamicQuery<EncryptionKeyWithSecrets> for EncryptionKeyRepositor
         sort: Option<&Vec<SortCondition>>,
         page_size: i64,
         page: i64,
+        registration_id: String,
     ) -> Result<(Vec<EncryptionKeyWithSecrets>, i64)> {
         debug!(
             filter_count = filters.len(),
@@ -244,12 +245,13 @@ impl RepositoryDynamicQuery<EncryptionKeyWithSecrets> for EncryptionKeyRepositor
         &self,
         conn: &mut SqliteConnection,
         query: &DeleteQuery,
+        registration_id: String,
     ) -> Result<usize> {
         debug!(
             filter_count = query.filters.len(),
             "Deleting encryption keys by query"
         );
-        match self.get_by_dynamic_query(conn, &query.filters, None, 0, 0) {
+        match self.get_by_dynamic_query(conn, &query.filters, None, 0, 0, registration_id) {
             Ok((encrytion_keys, num_keys)) => {
                 let key_count = num_keys as usize;
                 let result = conn

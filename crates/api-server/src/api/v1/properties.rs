@@ -73,6 +73,9 @@ pub fn properties_router() -> Router {
 /// - The API resolves the caller's `registration_id` from the validated bearer token.
 /// - The property repository performs a scoped lookup by `(name, registration_id)`.
 ///
+/// Querystring guide:
+/// - This endpoint does not accept query parameters.
+///
 /// Response behavior:
 /// - `200`: property found and returned as a typed payload.
 /// - `404`: no property exists for that name within the caller scope.
@@ -119,6 +122,9 @@ async fn get_property(
 /// - The API resolves the caller's `registration_id` from the validated bearer token.
 /// - The property repository performs a scoped lookup by `(registration_id)`.
 ///
+/// Querystring guide:
+/// - This endpoint does not accept query parameters.
+///
 /// Response behavior:
 /// - `200`: properties found and returned as a array of typed payloads.
 /// - `404`: no properties exists for that caller scope.
@@ -159,10 +165,12 @@ async fn get_properties(depot: &mut Depot) -> AppResult<Json<Vec<TypedProperty>>
 /// - The API resolves the caller's `registration_id` from the validated bearer token.
 /// - The incoming JSON value is normalized into `PropertyValue` and stored as an upsert.
 ///
+/// Querystring guide:
+/// - This endpoint does not accept query parameters.
+///
 /// Response behavior:
 /// - `200`: property persisted and returned.
 /// - `400`: malformed request body.
-/// - `404`: not used by this endpoint.
 /// - `401`: missing or invalid bearer token.
 /// - `500`: unexpected storage or server failure.
 ///
@@ -211,10 +219,12 @@ async fn add_property(
 /// - The API resolves the caller's `registration_id` from the validated bearer token.
 /// - Each item is normalized into `PropertyValue` and persisted in a single batch upsert.
 ///
+/// Querystring guide:
+/// - This endpoint does not accept query parameters.
+///
 /// Response behavior:
 /// - `200`: properties persisted and returned.
 /// - `400`: malformed request body.
-/// - `404`: not used by this endpoint.
 /// - `401`: missing or invalid bearer token.
 /// - `500`: unexpected storage or server failure.
 ///
@@ -262,6 +272,9 @@ async fn add_properties(
 /// - The caller supplies the property `name` in the route path.
 /// - The API resolves the caller's `registration_id` from the validated bearer token.
 /// - The repository deletes by `(name, registration_id)` and reports affected rows.
+///
+/// Querystring guide:
+/// - This endpoint does not accept query parameters.
 ///
 /// Response behavior:
 /// - `200`: property deleted.
@@ -311,6 +324,9 @@ async fn delete_property(depot: &mut Depot, name: PathParam<String>) -> AppResul
 /// - The caller invokes the endpoint without a body.
 /// - The API resolves the caller's `registration_id` from the validated bearer token.
 /// - The repository deletes all records for that registration scope and reports row count.
+///
+/// Querystring guide:
+/// - This endpoint does not accept query parameters.
 ///
 /// Response behavior:
 /// - `200`: one or more properties deleted.

@@ -136,6 +136,7 @@ impl RepositoryDynamicQuery<Secret> for SecretRepository {
         sort: Option<&Vec<SortCondition>>,
         page_size: i64,
         page: i64,
+        registration_id: String,
     ) -> Result<(Vec<Secret>, i64)> {
         debug!(
             filter_count = filters.len(),
@@ -249,12 +250,13 @@ impl RepositoryDynamicQuery<Secret> for SecretRepository {
         &self,
         conn: &mut SqliteConnection,
         query: &DeleteQuery,
+        registration_id: String,
     ) -> Result<usize> {
         debug!(
             filter_count = query.filters.len(),
             "Deleting secrets by query"
         );
-        match self.get_by_dynamic_query(conn, &query.filters, None, 0, 0) {
+        match self.get_by_dynamic_query(conn, &query.filters, None, 0, 0, registration_id) {
             Ok((secret_records, num_records)) => {
                 let record_count = num_records as usize;
                 let result = conn

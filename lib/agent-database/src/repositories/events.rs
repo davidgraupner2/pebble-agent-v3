@@ -179,6 +179,7 @@ impl RepositoryDynamicQuery<Event> for EventRepository {
         sort: Option<&Vec<SortCondition>>,
         page_size: i64,
         page: i64,
+        registration_id: String,
     ) -> Result<(Vec<Event>, i64)> {
         debug!(
             filter_count = filters.len(),
@@ -285,12 +286,13 @@ impl RepositoryDynamicQuery<Event> for EventRepository {
         &self,
         conn: &mut SqliteConnection,
         query: &DeleteQuery,
+        registration_id: String,
     ) -> Result<usize> {
         debug!(
             filter_count = query.filters.len(),
             "Deleting events by query"
         );
-        match self.get_by_dynamic_query(conn, &query.filters, None, 0, 0) {
+        match self.get_by_dynamic_query(conn, &query.filters, None, 0, 0, registration_id) {
             Ok((event_records, num_records)) => {
                 let record_count = num_records as usize;
                 let result = conn

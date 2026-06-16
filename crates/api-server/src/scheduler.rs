@@ -1,9 +1,13 @@
-use agent_database::query::{DeleteQuery, DynamicQuery, FilterCondition, FilterOperator};
-use agent_database::{
-    get_db_connection_pool, ApiEncryptionKey, RepositoryContainer, RepositoryDynamicQuery,
+use crate::config::Config;
+use crate::properties::{
+    DEFAULT_PROPERTY_API_PURGE_EXPIRED_CACHE_RECORDS_SCHEDULE,
+    PROPERTY_API_PURGE_EXPIRED_CACHE_RECORDS_SCHEDULE,
 };
+use agent_core::prelude::RuntimeConstants;
+use agent_database::query::{DeleteQuery, FilterCondition, FilterOperator};
+use agent_database::{RepositoryContainer, RepositoryDynamicQuery};
 use chrono::Timelike;
-use chrono::{Duration, NaiveDateTime, Utc};
+use chrono::Utc;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::SqliteConnection;
 use std::future::Future;
@@ -17,11 +21,13 @@ use crate::error::{ApiError, AppResult};
 pub struct ScheduledJobDependencies {
     pub db_pool: Pool<ConnectionManager<SqliteConnection>>,
     pub repos: RepositoryContainer,
+    pub config: Config,
 }
 
 async fn add_async_job<F, Fut>(
     sched: &JobScheduler,
-    cron_expr: &'static str,
+    // cron_expr: &'static str,
+    cron_expr: String,
     job_name: &'static str,
     deps: Arc<ScheduledJobDependencies>,
     job_fn: F,
@@ -32,7 +38,7 @@ where
 {
     let job_fn = Arc::new(job_fn);
 
-    let job = Job::new_async(cron_expr, move |_job_id, _lock| {
+    let job = Job::new_async(cron_expr.clone(), move |_job_id, _lock| {
         let deps = Arc::clone(&deps);
         let job_fn = Arc::clone(&job_fn);
 
@@ -48,7 +54,7 @@ where
     Ok(())
 }
 
-async fn expire_cache_records(
+async fn purge_expired_cache_records(
     deps: Arc<ScheduledJobDependencies>,
     job_name: String,
 ) -> AppResult<()> {
@@ -56,84 +62,74 @@ async fn expire_cache_records(
 
     tokio::task::spawn_blocking(move || -> AppResult<()> {
         // Build filter for checking if cache records have expired
-        let now = Utc::now().naive_utc();
-        let now = now.with_nanosecond(0).unwrap();
-        let filters = vec![FilterCondition {
-            field: "expires_at".to_string(),
-            operator: FilterOperator::Lt,
-            value: now.to_string(),
-        }];
+        let now = Utc::now().naive_utc().with_nanosecond(0).unwrap();
 
-        // Get a database connection from the pool
-        let mut conn = pool
-            .get()
-            .map_err(|err| ApiError::BadRequest(err.to_string()))?;
+        // let filters = vec![FilterCondition {
+        //     field: "expires_at".to_string(),
+        //     operator: FilterOperator::Lt,
+        //     value: now.to_string(),
+        // }];
 
-        // Get Access to the Cache DB reporitory
-        let cache_repo = deps.repos.cache_repo.clone();
+        // // Get a database connection from the pool
+        // let mut conn = pool.get().map_err(|err| {
+        //     ApiError::JobSchedulerError(format!("Error getting DB Connection - {}", err))
+        // })?;
 
-        // Attempt to delete expired records
-        let deleted = cache_repo.delete_by_dynamic_query(&mut conn, &DeleteQuery { filters })?;
+        // // Get Access to the Cache DB reporitory
+        // let cache_repo = deps.repos.cache_repo.clone();
 
-        debug!(
-            "{} executed and removed {} expired cache records",
-            job_name, deleted
-        );
+        // // Attempt to delete expired records
+        // let deleted = cache_repo.delete_by_dynamic_query(&mut conn, &DeleteQuery { filters })?;
 
-        println!(
-            "{} executed and removed {} expired cache records",
-            job_name, deleted
-        );
+        // debug!(
+        //     "{} executed and removed {} expired cache records",
+        //     job_name, deleted
+        // );
 
         Ok(())
     })
     .await
-    .map_err(|err| ApiError::BadRequest(err.to_string()));
+    .map_err(|err| {
+        ApiError::JobSchedulerError(format!(
+            "Error joining 'purge_expired_cache_records' task: {}",
+            err
+        ))
+    })??;
 
     Ok(())
 }
 
-// async fn expire_cache_records2(deps: Arc<ScheduledJobDependencies>) -> AppResult<()> {
-//     let pool = deps.db_pool.clone();
-//     let repos = deps.repos.clone();
-
-//     tokio::task::spawn_blocking(move || -> AppResult<()> {
-//         let mut conn = pool
-//             .get()
-//             .map_err(|err| ApiError::BadRequest(err.to_string()));
-
-//         println!("We run less often");
-//         Ok(())
-//     })
-//     .await
-//     .map_err(|err| ApiError::BadRequest(err.to_string()));
-
-//     Ok(())
-// }
-
 pub async fn setup_scheduler(dependencies: ScheduledJobDependencies) -> AppResult<JobScheduler> {
+    // Get our schedules from the properties
+    let runtime_constants = RuntimeConstants::global();
+    let purge_expired_cache_records_schedule = dependencies.config.get_string(
+        PROPERTY_API_PURGE_EXPIRED_CACHE_RECORDS_SCHEDULE,
+        DEFAULT_PROPERTY_API_PURGE_EXPIRED_CACHE_RECORDS_SCHEDULE,
+        runtime_constants.api_id().to_string(),
+    );
+
     // Create our background job scheduler and our job dependencies so we can interact with the  database
     let sched = JobScheduler::new().await?;
     let deps = Arc::new(dependencies);
 
     // Create our list of async jobs
-    add_async_job(
-        &sched,
-        "0/10 * * * * *",
-        "Expire Cache Records",
-        deps.clone(),
-        expire_cache_records,
-    )
-    .await?;
-
     // add_async_job(
     //     &sched,
-    //     "0/20 * * * * *",
-    //     "Expire Cache Records 2",
+    //     "0/10 * * * * *",
+    //     "Expire Cache Records",
     //     deps.clone(),
-    //     expire_cache_records2,
+    //     purge_expired_cache_records,
     // )
     // .await?;
+
+    add_async_job(
+        &sched,
+        purge_expired_cache_records_schedule,
+        "Expire Cache Records",
+        deps.clone(),
+        purge_expired_cache_records,
+    )
+    .await?;
 
     Ok(sched)
 }

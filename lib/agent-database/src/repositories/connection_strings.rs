@@ -171,6 +171,7 @@ impl RepositoryDynamicQuery<ConnectionString> for ConnectionStringRepository {
         sort: Option<&Vec<SortCondition>>,
         page_size: i64,
         page: i64,
+        registration_id: String,
     ) -> Result<(Vec<ConnectionString>, i64)> {
         debug!(
             filter_count = filters.len(),
@@ -276,13 +277,14 @@ impl RepositoryDynamicQuery<ConnectionString> for ConnectionStringRepository {
         &self,
         conn: &mut SqliteConnection,
         query: &DeleteQuery,
+        registration_id: String,
     ) -> Result<usize> {
         debug!(
             filter_count = query.filters.len(),
             "Deleting connection strings by query"
         );
 
-        match self.get_by_dynamic_query(conn, &query.filters, None, 0, 0) {
+        match self.get_by_dynamic_query(conn, &query.filters, None, 0, 0, registration_id) {
             Ok((connection_string_records, num_records)) => {
                 let record_count = num_records as usize;
                 let result = conn
